@@ -14,16 +14,16 @@
 
 | ID | Plant | Type | Recipe / creation |
 |---:|---|---|---|
-| 6000 | Lotus Pumpkin | Basic Cross Fusion | Pumpkin + Snow Lotus |
-| 6001 | Bambnut | Basic Cross Fusion | Bamblock + Wall-nut |
-| 6002 | Magnet-o-pea | Basic Cross Fusion | Peashooter + Magnet-shroom |
-| 6003 | Iceberg-shroom | Basic Double Fusion | Ice-shroom + Ice-shroom |
+| 6000 | Lotus Pumpkin | Cross Adventure Fusion | Pumpkin + Snow Lotus |
+| 6001 | Bambnut | Cross Adventure Fusion | Bamblock + Wall-nut |
+| 6002 | Magnet-o-pea | Cross Fusion | Peashooter + Magnet-shroom |
+| 6003 | Iceberg-shroom | Double Fusion | Ice-shroom + Ice-shroom |
 | 6004 | Witchfire Pumpkin | Weak Odyssey | Pyro Pumpkin + Doom Pumpkin |
-| 6005 | Nutty Sharpshooter | Basic Cross Fusion | Spruce Sharpshooter + Wall-nut |
+| 6005 | Nutty Sharpshooter | Cross Adventure Fusion | Spruce Sharpshooter + Wall-nut |
 | 6006 | Inferno Torchflower | Advanced Alt | Infernowood + Sunflower |
 | 6007 | Pumpkin Podbomber | Advanced Alt | Explode-o-shooter + Pumpkin |
-| 6008 | Ceasarweed | Advanced Alt | Salad-pult + Spikeweed; Melon-pult reverts it |
-| 6009 | Solar Firnace | Cross Adventure / special fusion | Firnace absorbs the Sunflower below it |
+| 6008 | Ceasarweed | Advanced Alt | Salad-pult + Spikeweed |
+| 6009 | Solar Firnace | Cross Adventure Fusion | Firnace absorbs the Sunflower below it |
 
 All custom plant IDs use the 6000 range to avoid PVZ Fusion 3.8's occupied native range.
 
