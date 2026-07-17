@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.cs text diff=csharp
+*.csproj text
+*.sln text eol=crlf
+*.md text
+*.yml text
+*.yaml text
+
+# Unity AssetBundles are binary files
+src/PlantsPlus/Resources/AssetBundles/* binary

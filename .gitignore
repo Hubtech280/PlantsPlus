@@ -1,0 +1,27 @@
+# Build output
+build/
+bin/
+obj/
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local game references / private dependencies
+References/
+GameRefs/
+lib/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Release archives
+*.zip

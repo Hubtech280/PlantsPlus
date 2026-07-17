@@ -1,0 +1,10 @@
+{
+  "release": "Plants+ v1.0.0",
+  "melonloader_build_string": "1.0.0-release-ml.3",
+  "target_game": "Plants vs. Zombies Fusion 3.8",
+  "target_loader": "MelonLoader 0.7.3",
+  "binary_size": 30362624,
+  "binary_sha256": "748c0f95f6aa3534e48a49e1abc3c7ac9557f0110f6c6d7cb0a7e25ba39b40d4",
+  "source_status": "GitHub source package prepared from the final tested V1 codebase.",
+  "binary_status": "The final tested binary was promoted to V1.0.0 with fixed-length release metadata updates only."
+}

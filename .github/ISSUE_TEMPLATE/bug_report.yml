@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a Plants+ gameplay, loading or compatibility problem
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve Plants+. Please attach the complete MelonLoader log.
+  - type: input
+    id: game_version
+    attributes:
+      label: PvZ Fusion version
+      placeholder: "3.8"
+    validations:
+      required: true
+  - type: input
+    id: loader_version
+    attributes:
+      label: MelonLoader and CustomizeLib versions
+      placeholder: "MelonLoader 0.7.3 / CustomizeLib 3.8 ml port"
+    validations:
+      required: true
+  - type: dropdown
+    id: plant
+    attributes:
+      label: Affected plant
+      options:
+        - Lotus Pumpkin
+        - Bambnut
+        - Magnet-o-pea
+        - Iceberg-shroom
+        - Witchfire Pumpkin
+        - Nutty Sharpshooter
+        - Inferno Torchflower
+        - Pumpkin Podbomber
+        - Ceasarweed
+        - Solar Firnace
+        - Loading / general
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the exact recipe, mode and actions.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: MelonLoader log
+      description: Drag the full Latest.log file here. The log should contain `Plants+ 1.0.0-release-ml.3 loaded!`.
+    validations:
+      required: true
