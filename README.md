@@ -53,7 +53,7 @@ Open an issue using the bug-report template and attach the complete MelonLoader 
 ## Credits
 
 - Mod creator and plant concepts: **Auro**
-- Iceberg-shroom sprite credit: **@(sin of lust) red reel**
+- Sprites credit: **Red Reel**
 - Built for the PvZ Fusion modding community using the MelonLoader port of CustomizeLib
 
 ## Disclaimer
