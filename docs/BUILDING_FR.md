@@ -39,7 +39,7 @@ dotnet build .\src\PlantsPlus\PlantsPlus.csproj -c Release
 Le DLL est produit dans :
 
 ```text
-build/PlantsPlus.dll
+src/build/PlantsPlus.dll
 ```
 
 ## Build de secours

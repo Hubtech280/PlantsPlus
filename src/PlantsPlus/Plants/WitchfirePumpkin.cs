@@ -9,14 +9,16 @@ namespace PlantsPlus.Plants
 {
     /// <summary>
     /// Witchfire Pumpkin's prefab bridge and custom mechanics. PVZ Fusion's
-    /// JalaPumpkin still owns the working energy counter, while this component
-    /// supplies the interactions that are hard-coded to the vanilla type.
+    /// JalaPumpkin supplies the native visual and explosion helpers, while
+    /// this component owns Witchfire's charge and cooldown. Keeping the
+    /// charge outside JalaPumpkin.attributeCount prevents native Pyro/fire
+    /// callbacks from recursively multiplying custom energy.
     /// </summary>
     public class WitchfirePumpkin : MonoBehaviour
     {
         public const int WitchfirePumpkinID = 6004;
         public const int Toughness = 4000;
-        public const int BiteDamage = 300;
+        public const int BiteDamage = 50;
 
         // Pyro Pumpkin has no exposed PlantData entry in PVZ Fusion 3.8.
         // Witchfire therefore owns stable card values instead of attempting
@@ -28,6 +30,13 @@ namespace PlantsPlus.Plants
         public const float SacrificeCooldownSeconds = 45f;
         public const int BaseExplosionDamage = 1800;
         public const int FusionSacrificeEnergy = 3600;
+        public const int MinimumSacrificeCost = 25;
+        public const int MaximumStoredEnergy = 10000;
+        public const int ReflectionChargeStep = 30;
+        public const int ReflectionDamagePerStep = 5;
+        public const int EnflamedDeathCharge = 100;
+        public const int IrritatedDeathCharge = 250;
+        public const int DoomExplosionChargeCap = 1800;
         public const float RadiationInterval = 0.2f;
         public const int RadiationBaseDamage = 100;
         public const int RadiationDamagePerKill = 20;
@@ -40,7 +49,19 @@ namespace PlantsPlus.Plants
         // Re-scanning the tile during a projectile hit proved unreliable once
         // the native pumpkin state changed, so combat hooks use this registry.
         private static readonly Dictionary<int, WitchfirePumpkin>
-            ProtectedPlantOwners = new();
+            ProtectedPlantOwners =
+                new Dictionary<int, WitchfirePumpkin>();
+
+        private static readonly Dictionary<int, WitchfirePumpkin>
+            ActiveWitchfires =
+                new Dictionary<int, WitchfirePumpkin>();
+
+        // TakeDamage can be nested by armor, splash and status callbacks. Keep
+        // one reward per actual zombie death even when more than one postfix
+        // observes the same transition. Instance IDs are released again when
+        // a pooled zombie becomes alive, so reused game objects remain valid.
+        private static readonly HashSet<int> RewardedStatusDeaths =
+            new HashSet<int>();
 
         private static bool prefabBridgeLogged;
         private static bool biteEffectLogged;
@@ -50,13 +71,19 @@ namespace PlantsPlus.Plants
         [ThreadStatic]
         private static JalaPumpkin? witchfireFireLineSource;
 
+        [ThreadStatic]
+        private static JalaPumpkin? witchfireBiteSource;
+
         private Plant? protectedPlant;
         private Plant? pendingSacrificePlant;
         private bool protectedDamageHitLogged;
         private float healTimer;
         private float sacrificeCooldown;
-        private bool wasLit;
+        private bool litState = true;
+        private bool wasLit = true;
+        private bool processingSacrifice;
         private bool deathExplosionHandled;
+        private int storedEnergy;
         private int lastObservedEnergy = int.MinValue;
         private float radiationTimer;
         private int radiationKills;
@@ -96,6 +123,19 @@ namespace PlantsPlus.Plants
                 return;
             }
 
+            // A newly created/fused Witchfire always starts from a clean,
+            // lit state. Never import the native prefab/previous pumpkin's
+            // attributeCount: that was the source of the huge inherited
+            // charge values seen in V1.0.
+            storedEnergy = 0;
+            sacrificeCooldown = 0f;
+            litState = true;
+            processingSacrifice = false;
+            deathExplosionHandled = false;
+            plant.uncrashable = false;
+            SynchronizeNativeState(plant);
+            RegisterActiveWitchfire();
+
             Plugin.Logger.LogInfo(
                 "[Witchfire Pumpkin] Ready" +
                 " | Native behaviour = JalaPumpkin" +
@@ -103,12 +143,14 @@ namespace PlantsPlus.Plants
                 "/" + plant.thePlantMaxHealth +
                 " | back = " + Describe(plant.back) +
                 " | fire3 = " + Describe(plant.fire3) +
-                " | Lit(Energy/FireCover) = " + IsLit(plant) +
-                " | Energy = " + plant.attributeCount
+                " | Lit = " + IsLit(plant) +
+                " | Charge = " + storedEnergy +
+                "/" + MaximumStoredEnergy
             );
 
             wasLit = IsLit(plant);
-            lastObservedEnergy = plant.attributeCount;
+            lastObservedEnergy = storedEnergy;
+            RefreshChargeText(plant);
         }
 
         public void Update()
@@ -122,7 +164,17 @@ namespace PlantsPlus.Plants
             }
 
             if (sacrificeCooldown > 0f)
-                sacrificeCooldown = Mathf.Max(0f, sacrificeCooldown - Time.deltaTime);
+            {
+                sacrificeCooldown = Mathf.Max(
+                    0f,
+                    sacrificeCooldown - Time.deltaTime
+                );
+
+                if (sacrificeCooldown <= 0f)
+                    litState = true;
+            }
+
+            SynchronizeNativeState(self);
 
             bool lit = IsLit(self);
 
@@ -131,41 +183,25 @@ namespace PlantsPlus.Plants
                 Plugin.Logger.LogInfo(
                     "[Witchfire Pumpkin] Lit state changed | " +
                     wasLit + " -> " + lit +
-                    " | EnergyLit = " + (self.attributeCount > 0) +
-                    " | FireCover = " + self.HasBuff(EffectType.FireCover) +
-                    " | Energy = " + self.attributeCount
+                    " | Charge = " + storedEnergy +
+                    " | Cooldown = " + sacrificeCooldown
                 );
             }
 
-            if (self.attributeCount != lastObservedEnergy)
+            if (storedEnergy != lastObservedEnergy)
             {
                 Plugin.Logger.LogInfo(
-                    "[Witchfire Pumpkin] Native energy changed | " +
-                    lastObservedEnergy + " -> " + self.attributeCount
+                    "[Witchfire Pumpkin] Charge changed | " +
+                    lastObservedEnergy + " -> " + storedEnergy
                 );
-                lastObservedEnergy = self.attributeCount;
+                lastObservedEnergy = storedEnergy;
             }
 
             if (lit)
             {
-                // Preserve the exact plant selected while Witchfire was unlit.
-                // The native lit transition can remove that plant from the
-                // 1x1 lookup before the automatic sacrifice runs.
-                if (protectedPlant != null)
-                    pendingSacrificePlant = protectedPlant;
-                else if (pendingSacrificePlant == null)
-                    pendingSacrificePlant = FindProtectedPlant(self);
-
                 ClearProtectedPlantBuff();
                 healTimer = 0f;
-
-                // A lit Witchfire automatically consumes the next valid plant
-                // as soon as its 45-second sacrifice cooldown is available.
-                if (sacrificeCooldown <= 0f &&
-                    TryAutomaticSacrifice(self, pendingSacrificePlant))
-                {
-                    pendingSacrificePlant = null;
-                }
+                pendingSacrificePlant = FindProtectedPlant(self);
             }
             else
             {
@@ -176,6 +212,7 @@ namespace PlantsPlus.Plants
             }
 
             UpdateRadiation(self);
+            RefreshChargeText(self);
 
             wasLit = lit;
         }
@@ -183,6 +220,7 @@ namespace PlantsPlus.Plants
         public void OnDestroy()
         {
             ClearProtectedPlantBuff();
+            UnregisterActiveWitchfire();
         }
 
         private static bool IsWitchfirePumpkin(Plant? plant)
@@ -197,21 +235,239 @@ namespace PlantsPlus.Plants
             if (plant == null)
                 return false;
 
-            // Native Pyro Pumpkin stores the energy received from a fire line
-            // in attributeCount. A positive counter is its usable lit state.
-            if (plant.attributeCount > 0)
-                return true;
-
             try
             {
-                // Keep compatibility with effects/modifiers that ignite a
-                // plant through PVZ Fusion's generic plant-fire status.
-                return plant.HasBuff(EffectType.FireCover);
+                WitchfirePumpkin? behaviour =
+                    plant.gameObject.GetComponent<WitchfirePumpkin>();
+
+                return behaviour != null && behaviour.litState;
             }
             catch
             {
                 return false;
             }
+        }
+
+        private void SynchronizeNativeState(JalaPumpkin plant)
+        {
+            if (plant == null)
+                return;
+
+            storedEnergy = Mathf.Clamp(
+                storedEnergy,
+                0,
+                MaximumStoredEnergy
+            );
+
+            // attributeCount remains a visual compatibility flag only. The
+            // actual charge is storedEnergy, so native callbacks cannot copy
+            // or multiply it. A lit zero-charge Witchfire uses 1 solely to
+            // keep the native lit visual active.
+            int expectedNativeValue = litState
+                ? Mathf.Max(1, storedEnergy)
+                : 0;
+
+            if (plant.attributeCount != expectedNativeValue)
+                plant.attributeCount = expectedNativeValue;
+
+            plant.uncrashable = false;
+        }
+
+        private void AddEnergySafe(int amount, string source)
+        {
+            if (amount <= 0)
+                return;
+
+            int before = storedEnergy;
+            long wanted = (long)before + amount;
+            storedEnergy = wanted >= MaximumStoredEnergy
+                ? MaximumStoredEnergy
+                : (int)wanted;
+
+            JalaPumpkin? plant = NativePlant;
+
+            if (plant != null && !plant.dying)
+            {
+                if (sacrificeCooldown <= 0f)
+                    litState = true;
+
+                SynchronizeNativeState(plant);
+                RefreshChargeText(plant);
+            }
+
+            if (storedEnergy != before)
+            {
+                Plugin.Logger.LogInfo(
+                    "[Witchfire Pumpkin] Charge awarded" +
+                    " | Source = " + source +
+                    " | " + before + " -> " + storedEnergy
+                );
+            }
+        }
+
+        private int CalculateBiteDamage()
+        {
+            int steps = Mathf.Max(0, storedEnergy) / ReflectionChargeStep;
+            long damage = BiteDamage +
+                (long)steps * ReflectionDamagePerStep;
+
+            return damage >= int.MaxValue ? int.MaxValue : (int)damage;
+        }
+
+        private string GetChargeText()
+        {
+            if (litState && sacrificeCooldown <= 0f)
+            {
+                return "Charge: " + storedEnergy + "/" +
+                    MaximumStoredEnergy +
+                    (pendingSacrificePlant != null ? " | READY" : " | LIT");
+            }
+
+            return "Charge: " + storedEnergy + "/" +
+                MaximumStoredEnergy + " | " +
+                Mathf.CeilToInt(sacrificeCooldown) + "s";
+        }
+
+        private static void RefreshChargeText(Plant plant)
+        {
+            try
+            {
+                plant.UpdateText();
+            }
+            catch
+            {
+                // The native text object is optional in a few game modes.
+            }
+        }
+
+        private void RegisterActiveWitchfire()
+        {
+            JalaPumpkin? plant = NativePlant;
+            int key = GetPlantKey(plant);
+
+            if (key != 0)
+                ActiveWitchfires[key] = this;
+        }
+
+        private void UnregisterActiveWitchfire()
+        {
+            JalaPumpkin? plant = NativePlant;
+            int key = GetPlantKey(plant);
+
+            if (key != 0 &&
+                ActiveWitchfires.TryGetValue(
+                    key,
+                    out WitchfirePumpkin? owner
+                ) &&
+                ReferenceEquals(owner, this))
+            {
+                ActiveWitchfires.Remove(key);
+            }
+        }
+
+        private static void AwardStatusDeathCharge(
+            int row,
+            bool irritated,
+            bool enflamed
+        )
+        {
+            // Irritated has priority and never stacks its reward with the
+            // Enflamed reward for the same death.
+            int amount = irritated
+                ? IrritatedDeathCharge
+                : enflamed
+                    ? EnflamedDeathCharge
+                    : 0;
+
+            if (amount <= 0)
+                return;
+
+            var owners = new List<WitchfirePumpkin>(
+                ActiveWitchfires.Values
+            );
+
+            for (int index = 0; index < owners.Count; index++)
+            {
+                WitchfirePumpkin? owner = owners[index];
+
+                if (owner is null || owner == null)
+                    continue;
+
+                JalaPumpkin? plant = owner.NativePlant;
+
+                if (plant == null ||
+                    plant.dying ||
+                    plant.thePlantRow != row)
+                {
+                    continue;
+                }
+
+                owner.AddEnergySafe(
+                    amount,
+                    irritated
+                        ? "Irritated zombie death"
+                        : "Enflamed zombie death"
+                );
+            }
+        }
+
+        private static void AwardDoomExplosionCharge(
+            int column,
+            int row,
+            int damage
+        )
+        {
+            int amount = Mathf.Clamp(
+                damage,
+                0,
+                DoomExplosionChargeCap
+            );
+
+            if (amount <= 0)
+                return;
+
+            var owners = new List<WitchfirePumpkin>(
+                ActiveWitchfires.Values
+            );
+
+            for (int index = 0; index < owners.Count; index++)
+            {
+                WitchfirePumpkin? owner = owners[index];
+
+                if (owner is null || owner == null)
+                    continue;
+
+                JalaPumpkin? plant = owner.NativePlant;
+
+                if (plant == null || plant.dying)
+                    continue;
+
+                if (Math.Abs(plant.thePlantRow - row) > 1 ||
+                    Math.Abs(plant.thePlantColumn - column) > 1)
+                {
+                    continue;
+                }
+
+                owner.AddEnergySafe(amount, "Doom-shroom explosion");
+            }
+        }
+
+        private static bool IsDoomChargeSource(PlantType fromType)
+        {
+            if ((int)fromType == WitchfirePumpkinID ||
+                fromType == PlantType.Nothing)
+            {
+                return false;
+            }
+
+            if (fromType == PlantType.DoomShroom)
+                return true;
+
+            string name = fromType.ToString();
+            return name.IndexOf(
+                "Doom",
+                StringComparison.OrdinalIgnoreCase
+            ) >= 0;
         }
 
         private static Plant? FindProtectedPlant(JalaPumpkin shell)
@@ -508,74 +764,70 @@ namespace PlantsPlus.Plants
             }
         }
 
-        private bool TryAutomaticSacrifice(
-            JalaPumpkin self,
-            Plant? preferredTarget = null
-        )
-        {
-            SacrificeInfo? sacrifice = PrepareSacrifice(
-                self,
-                preferredTarget
-            );
-
-            if (!sacrifice.HasValue)
-                return false;
-
-            SacrificeInfo info = sacrifice.Value;
-            int energyBefore = Mathf.Max(0, self.attributeCount);
-            int explosionDamage = CalculateExplosionDamage(energyBefore);
-
-            ShovelSacrificedPlant(info);
-            TriggerDualExplosion(self, explosionDamage, "automatic lit sacrifice");
-            AwardSacrifice(self, info);
-
-            sacrificeCooldown = SacrificeCooldownSeconds;
-            lastObservedEnergy = self.attributeCount;
-            return true;
-        }
-
         private bool TriggerClickOrDeathExplosion(
             JalaPumpkin self,
-            string source
+            string source,
+            bool allowSacrifice
         )
         {
-            if (self == null)
+            if (self == null || processingSacrifice)
                 return false;
 
-            SacrificeInfo? sacrifice = sacrificeCooldown <= 0f
+            SacrificeInfo? sacrifice = allowSacrifice &&
+                litState &&
+                sacrificeCooldown <= 0f
                 ? PrepareSacrifice(
                     self,
                     protectedPlant ?? pendingSacrificePlant
                 )
                 : null;
 
-            if (sacrifice.HasValue)
-            {
-                ShovelSacrificedPlant(sacrifice.Value);
-                AwardSacrifice(self, sacrifice.Value);
-                sacrificeCooldown = SacrificeCooldownSeconds;
-                pendingSacrificePlant = null;
-            }
+            // A normal click is a sacrifice action, not a free explosion.
+            // Death still consumes the existing charge without attempting to
+            // shovel a second plant from a dying tile.
+            if (allowSacrifice && !sacrifice.HasValue)
+                return false;
 
-            // Click/death damage uses the charges after the protected plant's
-            // value has been awarded, then consumes all stored charges.
-            int energyForDamage = Mathf.Max(0, self.attributeCount);
-            int explosionDamage = CalculateExplosionDamage(energyForDamage);
-            TriggerDualExplosion(self, explosionDamage, source);
-
-            self.attributeCount = 0;
-            lastObservedEnergy = 0;
+            processingSacrifice = true;
 
             try
             {
-                self.UpdateText();
-            }
-            catch
-            {
-                // The native counter is already depleted.
-            }
+                if (sacrifice.HasValue)
+                {
+                    ShovelSacrificedPlant(sacrifice.Value);
+                    AwardSacrifice(self, sacrifice.Value);
+                }
 
-            return true;
+                // Damage uses the charge after the sacrificed plant's value
+                // was awarded, then consumes that charge exactly once.
+                int energyForDamage = Mathf.Clamp(
+                    storedEnergy,
+                    0,
+                    MaximumStoredEnergy
+                );
+                int explosionDamage = CalculateExplosionDamage(
+                    energyForDamage
+                );
+                TriggerDualExplosion(self, explosionDamage, source);
+
+                storedEnergy = 0;
+                pendingSacrificePlant = null;
+
+                if (allowSacrifice)
+                {
+                    litState = false;
+                    sacrificeCooldown = SacrificeCooldownSeconds;
+                }
+
+                SynchronizeNativeState(self);
+                RefreshChargeText(self);
+                lastObservedEnergy = storedEnergy;
+                return true;
+            }
+            finally
+            {
+                processingSacrifice = false;
+            }
         }
 
         private static int CalculateExplosionDamage(int energyLevel)
@@ -646,11 +898,13 @@ namespace PlantsPlus.Plants
                 PlantDataManager.PlantData data =
                     PlantDataManager.GetPlantData(plant.thePlantType);
 
-                return data != null ? Mathf.Max(0, data.cost) : 0;
+                return data != null
+                    ? Mathf.Max(MinimumSacrificeCost, data.cost)
+                    : MinimumSacrificeCost;
             }
             catch
             {
-                return 0;
+                return MinimumSacrificeCost;
             }
         }
 
@@ -737,25 +991,12 @@ namespace PlantsPlus.Plants
             }
         }
 
-        private static void AwardSacrifice(
+        private void AwardSacrifice(
             JalaPumpkin self,
             SacrificeInfo sacrifice
         )
         {
-            try
-            {
-                self.EatEnergy(sacrifice.EnergyGain);
-            }
-            catch (Exception exception)
-            {
-                // Keep the counter functional even if a special native state
-                // rejects EatEnergy while the shell is dying.
-                self.attributeCount += sacrifice.EnergyGain;
-                Plugin.Logger.LogWarning(
-                    "[Witchfire Pumpkin] Native EatEnergy fallback used: " +
-                    exception.Message
-                );
-            }
+            AddEnergySafe(sacrifice.EnergyGain, "sacrifice");
 
             if (sacrifice.ReturnsFusionCard)
             {
@@ -1320,21 +1561,23 @@ namespace PlantsPlus.Plants
             if (self == null || self.dying)
                 return;
 
-            long rawDamage = RadiationBaseDamage +
-                (long)radiationKills * RadiationDamagePerKill;
-            int damage = rawDamage >= int.MaxValue
-                ? int.MaxValue
-                : (int)rawDamage;
-            float radiusTiles = 0.5f +
-                radiationKills * RadiationRadiusPerKill;
+            int damage = CalculateRadiationDamage(radiationKills);
+            float radiusTiles = CalculateRadiationRadiusTiles(radiationKills);
             List<Zombie> zombies = SnapshotEnemyZombies();
 
             for (int index = 0; index < zombies.Count; index++)
             {
                 Zombie zombie = zombies[index];
 
-                if (!CanExplosionHit(zombie) ||
-                    !InRadiationArea(self, zombie, radiusTiles))
+                if (!CanReceiveRadiationPulse(zombie) ||
+                    !IsInsideRadiationArea(
+                        self.transform.position,
+                        self.thePlantColumn,
+                        self.thePlantRow,
+                        self.board,
+                        zombie,
+                        radiusTiles
+                    ))
                 {
                     continue;
                 }
@@ -1348,35 +1591,63 @@ namespace PlantsPlus.Plants
             }
         }
 
-        private static bool InRadiationArea(
-            JalaPumpkin self,
+        /// <summary>
+        /// Shared Radiation rules used by Witchfire Pumpkin and Doomtronion.
+        /// Keeping the calculation and tile geometry here prevents the two
+        /// mechanics from silently drifting apart again.
+        /// </summary>
+        internal static int CalculateRadiationDamage(int killCount)
+        {
+            int safeKills = Mathf.Max(0, killCount);
+            long rawDamage = RadiationBaseDamage +
+                (long)safeKills * RadiationDamagePerKill;
+
+            return rawDamage >= int.MaxValue
+                ? int.MaxValue
+                : (int)rawDamage;
+        }
+
+        internal static float CalculateRadiationRadiusTiles(int killCount)
+        {
+            int safeKills = Mathf.Max(0, killCount);
+            return 0.5f + safeKills * RadiationRadiusPerKill;
+        }
+
+        internal static bool CanReceiveRadiationPulse(Zombie? zombie)
+        {
+            return CanExplosionHit(zombie);
+        }
+
+        internal static bool IsInsideRadiationArea(
+            Vector3 centerPosition,
+            int centerColumn,
+            int centerRow,
+            Board? board,
             Zombie zombie,
             float radiusTiles
         )
         {
-            if (self == null || zombie == null || self.board == null)
+            if (zombie == null || board == null)
                 return false;
 
             try
             {
-                int column = self.thePlantColumn;
-                int neighborColumn = column + 1 < self.board.columnNum
-                    ? column + 1
-                    : Mathf.Max(0, column - 1);
+                int neighborColumn = centerColumn + 1 < board.columnNum
+                    ? centerColumn + 1
+                    : Mathf.Max(0, centerColumn - 1);
                 float tileWidth = Mathf.Abs(
                     Lawnf.GetBoxXFromColumn(neighborColumn) -
-                    Lawnf.GetBoxXFromColumn(column)
+                    Lawnf.GetBoxXFromColumn(centerColumn)
                 );
 
                 if (tileWidth < 0.01f)
                     tileWidth = 1f;
 
                 float horizontalTiles = Mathf.Abs(
-                    zombie.transform.position.x -
-                    self.transform.position.x
+                    zombie.transform.position.x - centerPosition.x
                 ) / tileWidth;
                 float verticalTiles = Mathf.Abs(
-                    zombie.theZombieRow - self.thePlantRow
+                    zombie.theZombieRow - centerRow
                 );
 
                 return Mathf.Max(horizontalTiles, verticalTiles) <=
@@ -1395,16 +1666,13 @@ namespace PlantsPlus.Plants
 
             radiationKills++;
 
-            long rawDamage = RadiationBaseDamage +
-                (long)radiationKills * RadiationDamagePerKill;
-
             Plugin.Logger.LogInfo(
                 "[Witchfire Pumpkin] Radiation upgraded by a kill" +
                 " | Kills = " + radiationKills +
                 " | Damage/0.2s = " +
-                (rawDamage >= int.MaxValue ? int.MaxValue : rawDamage) +
+                CalculateRadiationDamage(radiationKills) +
                 " | Radius = " +
-                (0.5f + radiationKills * RadiationRadiusPerKill) +
+                CalculateRadiationRadiusTiles(radiationKills) +
                 " tiles"
             );
         }
@@ -1731,16 +1999,60 @@ namespace PlantsPlus.Plants
             public bool TracksKill { get; }
         }
 
-        private readonly struct FireLineEnergyState
+        private readonly struct BiteState
         {
-            public FireLineEnergyState(JalaPumpkin plant)
+            public BiteState(
+                JalaPumpkin? previousSource,
+                bool hadEnflamed
+            )
             {
-                Plant = plant;
-                EnergyBefore = plant.attributeCount;
+                PreviousSource = previousSource;
+                HadEnflamed = hadEnflamed;
+                Active = true;
             }
 
-            public JalaPumpkin Plant { get; }
-            public int EnergyBefore { get; }
+            public JalaPumpkin? PreviousSource { get; }
+            public bool HadEnflamed { get; }
+            public bool Active { get; }
+        }
+
+        private readonly struct ZombieDeathChargeState
+        {
+            public ZombieDeathChargeState(
+                int healthBefore,
+                int row,
+                bool irritated,
+                bool enflamed,
+                bool suppressReward,
+                int zombieKey
+            )
+            {
+                HealthBefore = healthBefore;
+                Row = row;
+                Irritated = irritated;
+                Enflamed = enflamed;
+                SuppressReward = suppressReward;
+                ZombieKey = zombieKey;
+                Active = healthBefore > 0 && (irritated || enflamed);
+            }
+
+            public int HealthBefore { get; }
+            public int Row { get; }
+            public bool Irritated { get; }
+            public bool Enflamed { get; }
+            public bool SuppressReward { get; }
+            public int ZombieKey { get; }
+            public bool Active { get; }
+        }
+
+        private readonly struct FireLineEnergyState
+        {
+            public FireLineEnergyState(WitchfirePumpkin owner)
+            {
+                Owner = owner;
+            }
+
+            public WitchfirePumpkin Owner { get; }
         }
 
         private readonly struct SacrificeInfo
@@ -1811,6 +2123,8 @@ namespace PlantsPlus.Plants
         {
             if (plant == null)
                 return;
+
+            plant.uncrashable = false;
 
             GameObject customRoot = plant.gameObject;
             JalaPumpkin? nativePlant = nativePrefab != null
@@ -2029,6 +2343,7 @@ namespace PlantsPlus.Plants
             private static void Prefix(
                 BoardAction __instance,
                 int theFireRow,
+                PlantType fromType,
                 out List<FireLineEnergyState>? __state
             )
             {
@@ -2036,6 +2351,18 @@ namespace PlantsPlus.Plants
 
                 if (__instance == null || __instance.board == null)
                     return;
+
+                // Witchfire, Pyro Pumpkin and Inferno Torchflower fire lines
+                // are never valid Witchfire charge sources. This prevents
+                // self-feedback as well as energy inheritance between custom
+                // or native Pyro-family plants.
+                if (witchfireFireLineSource != null ||
+                    (int)fromType == WitchfirePumpkinID ||
+                    fromType == PlantType.JalaPumpkin ||
+                    (int)fromType == InfernoTorchflower.InfernoTorchflowerID)
+                {
+                    return;
+                }
 
                 try
                 {
@@ -2056,16 +2383,13 @@ namespace PlantsPlus.Plants
                         if (!IsWitchfirePumpkin(candidate) || candidate.dying)
                             continue;
 
-                        JalaPumpkin customPyro =
-                            candidate.gameObject.GetComponent<JalaPumpkin>();
+                        WitchfirePumpkin? owner = candidate.gameObject
+                            .GetComponent<WitchfirePumpkin>();
 
-                        if (customPyro == null ||
-                            SamePlant(customPyro, witchfireFireLineSource))
-                        {
+                        if (owner == null)
                             continue;
-                        }
 
-                        snapshots.Add(new FireLineEnergyState(customPyro));
+                        snapshots.Add(new FireLineEnergyState(owner));
                     }
 
                     if (snapshots.Count > 0)
@@ -2092,47 +2416,80 @@ namespace PlantsPlus.Plants
                 for (int index = 0; index < __state.Count; index++)
                 {
                     FireLineEnergyState snapshot = __state[index];
-                    JalaPumpkin plant = snapshot.Plant;
+                    WitchfirePumpkin owner = snapshot.Owner;
+
+                    if (owner == null)
+                        continue;
+
+                    JalaPumpkin? plant = owner.NativePlant;
 
                     if (plant == null ||
                         plant.dying ||
-                        !IsWitchfirePumpkin(plant) ||
-                        plant.attributeCount != snapshot.EnergyBefore)
+                        !IsWitchfirePumpkin(plant))
                     {
                         continue;
                     }
 
-                    try
-                    {
-                        plant.EatEnergy(damage);
-                    }
-                    catch (Exception exception)
-                    {
-                        long wanted = (long)plant.attributeCount + damage;
-                        plant.attributeCount = wanted >= int.MaxValue
-                            ? int.MaxValue
-                            : (int)wanted;
-
-                        try
-                        {
-                            plant.UpdateText();
-                        }
-                        catch
-                        {
-                        }
-
-                        Plugin.Logger.LogWarning(
-                            "[Witchfire Pumpkin] Native Pyro energy fallback " +
-                            "used: " + exception.Message
-                        );
-                    }
-
-                    Plugin.Logger.LogInfo(
-                        "[Witchfire Pumpkin] Lit by native fire line" +
-                        " | Energy +" + damage +
-                        " | Total = " + plant.attributeCount
-                    );
+                    owner.AddEnergySafe(damage, "external fire line");
                 }
+            }
+        }
+
+        // JalaPumpkin's native implementation can receive the same fire or
+        // death event through several internal callbacks. Witchfire owns its
+        // charge, so suppress every native mutation and award only through
+        // AddEnergySafe's filtered call sites above/below.
+        [HarmonyPatch(typeof(JalaPumpkin), nameof(JalaPumpkin.EatEnergy))]
+        private static class JalaPumpkin_EatEnergy_Patch
+        {
+            [HarmonyPrefix]
+            [HarmonyPriority(Priority.First)]
+            private static bool Prefix(JalaPumpkin __instance)
+            {
+                return !IsWitchfirePumpkin(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(BoardAction), nameof(BoardAction.SetDoom))]
+        private static class BoardAction_SetDoom_Charge_Patch
+        {
+            [HarmonyPostfix]
+            private static void Postfix(
+                int theColumn,
+                int theRow,
+                int damage,
+                PlantType fromType
+            )
+            {
+                if (!IsDoomChargeSource(fromType))
+                    return;
+
+                AwardDoomExplosionCharge(
+                    theColumn,
+                    theRow,
+                    damage
+                );
+            }
+        }
+
+        [HarmonyPatch(typeof(JalaPumpkin), "_OnAfterInitText_b__11_0")]
+        private static class JalaPumpkin_ChargeText_Patch
+        {
+            [HarmonyPostfix]
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(
+                JalaPumpkin __instance,
+                ref string __result
+            )
+            {
+                if (!IsWitchfirePumpkin(__instance))
+                    return;
+
+                WitchfirePumpkin? owner = __instance.gameObject
+                    .GetComponent<WitchfirePumpkin>();
+
+                if (owner != null)
+                    __result = owner.GetChargeText();
             }
         }
 
@@ -2167,33 +2524,45 @@ namespace PlantsPlus.Plants
             private static void Prefix(
                 JalaPumpkin __instance,
                 Zombie zombie,
-                out bool __state
+                out BiteState __state
             )
             {
-                __state = false;
+                __state = default;
 
                 if (!IsWitchfirePumpkin(__instance) || zombie == null)
                     return;
 
+                bool hadEnflamed = false;
+
                 try
                 {
-                    __state = zombie.HasBuff(EffectType.Jala);
+                    hadEnflamed = zombie.HasBuff(EffectType.Jala);
                 }
                 catch
                 {
-                    __state = false;
+                    hadEnflamed = false;
                 }
+
+                __state = new BiteState(
+                    witchfireBiteSource,
+                    hadEnflamed
+                );
+                witchfireBiteSource = __instance;
             }
 
             [HarmonyPostfix]
             private static void Postfix(
                 JalaPumpkin __instance,
                 Zombie zombie,
-                bool __state
+                BiteState __state
             )
             {
-                if (!IsWitchfirePumpkin(__instance) || zombie == null)
+                if (!__state.Active ||
+                    !IsWitchfirePumpkin(__instance) ||
+                    zombie == null)
+                {
                     return;
+                }
 
                 float duration = 1f;
                 float value = 1f;
@@ -2202,7 +2571,7 @@ namespace PlantsPlus.Plants
                 {
                     // Remove only the Enflammed effect introduced by this
                     // exact bite. A pre-existing Enflammed effect is preserved.
-                    if (!__state &&
+                    if (!__state.HadEnflamed &&
                         zombie.TryGetEffect<JalaEffect>(
                             EffectType.Jala,
                             out JalaEffect jalaEffect
@@ -2227,7 +2596,9 @@ namespace PlantsPlus.Plants
                         Plugin.Logger.LogInfo(
                             "[Witchfire Pumpkin] Bite effect corrected" +
                             " | Enflammed -> Irritated (Ember)" +
-                            " | Native 300 damage preserved"
+                            " | Base damage = " + BiteDamage +
+                            " | +" + ReflectionDamagePerStep +
+                            " per " + ReflectionChargeStep + " charge"
                         );
                     }
                 }
@@ -2238,6 +2609,22 @@ namespace PlantsPlus.Plants
                         exception.Message
                     );
                 }
+                finally
+                {
+                    witchfireBiteSource = __state.PreviousSource;
+                }
+            }
+
+            [HarmonyFinalizer]
+            private static Exception? Finalizer(
+                Exception? __exception,
+                BiteState __state
+            )
+            {
+                if (__state.Active)
+                    witchfireBiteSource = __state.PreviousSource;
+
+                return __exception;
             }
         }
 
@@ -2265,6 +2652,16 @@ namespace PlantsPlus.Plants
 
                 if (source == null)
                     return;
+
+                if (witchfireBiteSource != null &&
+                    SamePlant(source, witchfireBiteSource))
+                {
+                    WitchfirePumpkin? biteOwner = source.gameObject
+                        .GetComponent<WitchfirePumpkin>();
+
+                    if (biteOwner != null)
+                        theDamage = biteOwner.CalculateBiteDamage();
+                }
 
                 WitchfirePumpkin? killOwner =
                     FindWitchfireKillOwner(source);
@@ -2356,6 +2753,80 @@ namespace PlantsPlus.Plants
                     damageFrom,
                     theDamageType,
                     __state.Source
+                );
+            }
+        }
+
+        [HarmonyPatch(typeof(Zombie), nameof(Zombie.TakeDamage))]
+        private static class Zombie_StatusDeathCharge_Patch
+        {
+            [HarmonyPrefix]
+            private static void Prefix(
+                Zombie __instance,
+                IDamageMaker damageFrom,
+                out ZombieDeathChargeState __state
+            )
+            {
+                __state = default;
+
+                if (__instance == null || __instance.theHealth <= 0)
+                    return;
+
+                int zombieKey = __instance.GetInstanceID();
+
+                // A living object with this key is either a fresh zombie or
+                // a pooled instance that has been reset since its last death.
+                RewardedStatusDeaths.Remove(zombieKey);
+
+                bool irritated = false;
+                bool enflamed = false;
+
+                try
+                {
+                    irritated = __instance.HasBuff(EffectType.Ember);
+                    enflamed = __instance.HasBuff(EffectType.Jala);
+                }
+                catch
+                {
+                    // A zombie without a valid effect manager has no reward.
+                }
+
+                Plant? source = GetDamageSourcePlant(damageFrom);
+                bool suppressReward =
+                    source != null && IsWitchfirePumpkin(source);
+
+                __state = new ZombieDeathChargeState(
+                    __instance.theHealth,
+                    __instance.theZombieRow,
+                    irritated,
+                    enflamed,
+                    suppressReward,
+                    zombieKey
+                );
+            }
+
+            [HarmonyPostfix]
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(
+                Zombie __instance,
+                ZombieDeathChargeState __state
+            )
+            {
+                if (!__state.Active ||
+                    __state.SuppressReward ||
+                    __instance == null ||
+                    __state.HealthBefore <= 0 ||
+                    __instance.theHealth > 0 ||
+                    (__state.ZombieKey != 0 &&
+                        !RewardedStatusDeaths.Add(__state.ZombieKey)))
+                {
+                    return;
+                }
+
+                AwardStatusDeathCharge(
+                    __state.Row,
+                    __state.Irritated,
+                    __state.Enflamed
                 );
             }
         }
@@ -2513,7 +2984,7 @@ namespace PlantsPlus.Plants
                 ref bool __result
             )
             {
-                if (!IsWitchfirePumpkin(__instance) || !IsLit(__instance))
+                if (!IsWitchfirePumpkin(__instance))
                     return true;
 
                 WitchfirePumpkin behaviour =
@@ -2522,11 +2993,19 @@ namespace PlantsPlus.Plants
                 if (behaviour == null)
                     return true;
 
+                if (!behaviour.litState ||
+                    behaviour.sacrificeCooldown > 0f)
+                {
+                    __result = false;
+                    return false;
+                }
+
                 try
                 {
                     __result = behaviour.TriggerClickOrDeathExplosion(
                         __instance,
-                        "lit click"
+                        "lit click",
+                        true
                     );
 
                     // Our implementation performs the custom 1800+energy
@@ -2569,7 +3048,8 @@ namespace PlantsPlus.Plants
                     behaviour.ClearProtectedPlantBuff();
                     behaviour.TriggerClickOrDeathExplosion(
                         __instance,
-                        "death"
+                        "death",
+                        false
                     );
                 }
                 catch (Exception exception)

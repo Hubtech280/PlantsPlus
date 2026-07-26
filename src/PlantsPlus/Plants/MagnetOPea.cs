@@ -4,6 +4,7 @@ using Il2Cpp;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using PlantsPlus.Core;
 
 namespace PlantsPlus.Plants
 {
@@ -13,6 +14,11 @@ namespace PlantsPlus.Plants
         public const int BaseDamage = 20;
         public const float AttackInterval = 1.5f;
         public const float NormalPeaVisualScale = 1.15f;
+        // One Giga fragment is fired per normal 1.5-second attack. These
+        // isolated test values replace V1's underpowered 20 splash / 40 metal
+        // contact result and can be tuned after the next gameplay pass.
+        public const int GigaMechaContactDamage = 100;
+        public const int GigaMechaSplashDamage = 60;
 
         // Enemy projectiles cannot be passed to CreateBullet. A normal pea is
         // therefore used only as the invisible, plant-safe collision host.
@@ -1292,7 +1298,9 @@ namespace PlantsPlus.Plants
                     worldPosition.x,
                     worldPosition.y
                 );
-                int damage = Mathf.Max(bullet.Damage, BaseDamage);
+                int damage = mode == AbsorbedItem.GigaMecha
+                    ? GigaMechaSplashDamage
+                    : Mathf.Max(bullet.Damage, BaseDamage);
                 DamageType damageType = mode == AbsorbedItem.Jackbox
                     ? DamageType.JackboxExplode
                     : DamageType.Explode;
@@ -1549,6 +1557,7 @@ namespace PlantsPlus.Plants
                     break;
 
                 case AbsorbedItem.GigaMecha:
+                    bullet.Damage = GigaMechaContactDamage;
                     RegisterExplosiveProjectile(
                         bullet,
                         AbsorbedItem.GigaMecha
@@ -1636,6 +1645,42 @@ namespace PlantsPlus.Plants
                 ref Bullet __result
             )
             {
+                if (V11PlantsBootstrap.IsNotAPea(__instance))
+                {
+                    NotAPea? behaviour =
+                        __instance.gameObject.GetComponent<NotAPea>();
+
+                    // Only the shot armed by NotAPea.Update is accepted. Native
+                    // duplicate animation events are swallowed, while a missing
+                    // event is handled by the timed direct fallback.
+                    if (behaviour != null &&
+                        !behaviour.TryConsumeAnimationShot())
+                    {
+                        __result = null!;
+                        return false;
+                    }
+
+                    try
+                    {
+                        __result = V11PlantsBootstrap.CreateDirectSawShot(
+                            __instance,
+                            (PlantType)NotAPea.NotAPeaID,
+                            "Not-a-pea",
+                            NotAPea.Damage
+                        )!;
+                    }
+                    catch (Exception exception)
+                    {
+                        __result = null!;
+                        Plugin.Logger.LogError(
+                            "[Not-a-pea] Direct Shoot1 override failed: " +
+                            exception
+                        );
+                    }
+
+                    return false;
+                }
+
                 if (!IsMagnetOPea(__instance))
                     return true;
 
@@ -1652,10 +1697,36 @@ namespace PlantsPlus.Plants
                     );
                 }
 
-                // The custom prefab's native PeaShooter.Shoot1 dereferences a
-                // serialized field that CustomizeLib cannot populate when it
-                // adds the component at runtime. Skip it only for Magnet-o-pea.
+                // Custom prefabs receive PeaShooter after deserialization, so
+                // its serialized muzzle reference is unavailable. Both custom
+                // PeaShooter plants use a fully initialized direct shot here.
                 return false;
+            }
+        }
+
+        [HarmonyPatch(
+            typeof(SuperSnowGatling),
+            nameof(SuperSnowGatling.Shoot1)
+        )]
+        private static class SuperSnowGatling_Shoot1_Patch
+        {
+            [HarmonyPrefix]
+            [HarmonyPriority(Priority.First)]
+            private static void Prefix(SuperSnowGatling __instance)
+            {
+                if (!V11PlantsBootstrap.IsNotAStormCommando(__instance))
+                    return;
+
+                // Preserve SuperSnowGatling.Shoot1 itself: it owns the native
+                // six-barrel placement and Pea-storm cadence. The previous
+                // direct-shot hotfix collapsed every shot onto one fallback
+                // origin. Only repair the serialized runtime references here;
+                // CustomizeLib's projectile skin mapping then swaps every native
+                // pea for the custom saw without changing the firing pattern.
+                V11PlantsBootstrap.EnsureShooterRuntimeReferences(
+                    __instance,
+                    "Not-a-storm Commando"
+                );
             }
         }
 

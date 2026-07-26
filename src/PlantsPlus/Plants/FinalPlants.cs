@@ -71,7 +71,6 @@ namespace PlantsPlus.Core
                     "Ceasarweed turns every missed lobbed shot into a larger " +
                     "salad barrage on its next attack."
                 ) + "\n\n" +
-                Brown("Usage Conditions: ") + Red("Advanced Alt") + "\n" +
                 Stat("Toughness", "4000") + "\n" +
                 Stat("Damage", "80 per salad / 3s") + "\n" +
                 Brown("Special:") + "\n" +
@@ -134,6 +133,9 @@ namespace PlantsPlus.Core
                     "Every later extension costs 50 more Sun than the " +
                     "previous one."
                 ) + "\n" +
+                Bullet(
+                    "Protects the plant beneath it from being frozen by snow."
+                ) + "\n" +
                 Bullet("When the timer reaches zero, it returns to Firnace."),
                 LoreWithRecipe(
                     "Solar Firnace calls every extension a sound investment. " +
@@ -166,7 +168,7 @@ namespace PlantsPlus.Core
 
         private static string Bullet(string text)
         {
-            return Red("• " + text);
+            return Red("\u2022 " + text);
         }
 
         private static string LoreWithRecipe(string lore, string recipe)
@@ -380,9 +382,12 @@ namespace PlantsPlus.Plants
         public const int CeasarweedID = 6008;
         public const int MaxSalads = 10;
         public const float ButterSeconds = 4f;
+        public const float UpwardLaunchDuration = 0.18f;
+        public const float UpwardLaunchHeight = 0.65f;
+        public const float AttackFlightTime = 0.65f;
 
         [ThreadStatic]
-        private static Ceasarweed activeSpawner;
+        private static Ceasarweed? activeSpawner;
 
         [ThreadStatic]
         private static bool nativeAttackPass;
@@ -399,11 +404,18 @@ namespace PlantsPlus.Plants
         private int currentMisses;
         private int currentExternalMisses;
         private int capturedThisVolley;
-        private Sprite saladSprite;
+        private Sprite? saladSprite;
 
         private sealed class ProjectileRecord
         {
-            public Ceasarweed Owner;
+            public Ceasarweed? Owner;
+            public Bullet? Bullet;
+            public Zombie? Target;
+            public Vector2 TargetPosition;
+            public Vector3 LaunchOrigin;
+            public float LaunchElapsed;
+            public bool ColliderWasEnabled;
+            public bool Launching;
             public int Volley;
             public bool Resolved;
         }
@@ -448,6 +460,44 @@ namespace PlantsPlus.Plants
             RemoveOwnedProjectiles(this);
         }
 
+        public void Update()
+        {
+            var ids = new List<int>();
+
+            foreach (var pair in projectiles)
+            {
+                ProjectileRecord record = pair.Value;
+
+                if (record != null &&
+                    record.Owner == this &&
+                    record.Launching &&
+                    !record.Resolved)
+                {
+                    ids.Add(pair.Key);
+                }
+            }
+
+            for (int index = 0; index < ids.Count; index++)
+            {
+                ProjectileRecord? record;
+
+                if (projectiles.TryGetValue(ids[index], out record) &&
+                    record != null)
+                {
+                    // A projectile destroyed during the collision-free rise
+                    // must still finish its volley accounting. Otherwise the
+                    // plant can wait forever with currentRemaining > 0.
+                    if (record.Bullet == null || record.Bullet.dying)
+                    {
+                        ResolveRecord(ids[index], record, false);
+                        continue;
+                    }
+
+                    UpdateUpwardLaunch(record);
+                }
+            }
+        }
+
         private static bool IsCeasarweed(Plant plant)
         {
             return plant != null && (int)plant.thePlantType == CeasarweedID;
@@ -463,7 +513,7 @@ namespace PlantsPlus.Plants
             return Mathf.Clamp(1 + nextExtraShots, 1, MaxSalads);
         }
 
-        private void Capture(Bullet bullet)
+        private void Capture(Bullet? bullet)
         {
             if (bullet == null)
                 return;
@@ -472,12 +522,144 @@ namespace PlantsPlus.Plants
             projectiles[id] = new ProjectileRecord
             {
                 Owner = this,
+                Bullet = bullet,
+                LaunchOrigin = bullet.transform.position,
+                ColliderWasEnabled =
+                    bullet.col != null && bullet.col.enabled,
+                Launching = true,
                 Volley = currentVolley,
                 Resolved = false
             };
+
+            try
+            {
+                bullet._moveWay = BulletMoveWay.Stable;
+                bullet.Vx = 0f;
+                bullet.Vy = 0f;
+
+                if (bullet.rb != null)
+                    bullet.rb.velocity = Vector2.zero;
+
+                if (bullet.col != null)
+                    bullet.col.enabled = false;
+            }
+            catch (Exception exception)
+            {
+                PlantsPlus.Plugin.Logger.LogWarning(
+                    "[Ceasarweed] Initial upward launch guard failed " +
+                    "safely: " + exception.Message
+                );
+            }
+
             currentRemaining++;
             capturedThisVolley++;
             ApplySaladVisual(bullet);
+        }
+
+        private void ConfigureLaunch(Bullet? bullet, Zombie? target)
+        {
+            if (bullet == null || target == null)
+                return;
+
+            ProjectileRecord? record;
+
+            if (!projectiles.TryGetValue(
+                bullet.GetInstanceID(),
+                out record
+            ) || record == null)
+            {
+                return;
+            }
+
+            record.Target = target;
+            Vector3 targetPosition = target.transform.position;
+            record.TargetPosition = new Vector2(
+                targetPosition.x,
+                targetPosition.y
+            );
+        }
+
+        private static void UpdateUpwardLaunch(ProjectileRecord record)
+        {
+            Bullet? bullet = record.Bullet;
+
+            if (bullet == null || bullet.dying)
+                return;
+
+            try
+            {
+                record.LaunchElapsed += Time.deltaTime;
+                float progress = Mathf.Clamp01(
+                    record.LaunchElapsed / UpwardLaunchDuration
+                );
+                // Smooth upward-only opening arc. Collision remains disabled
+                // until this phase has completed, so a zombie standing on the
+                // muzzle cannot be hit on the spawn frame.
+                float eased = 1f - (1f - progress) * (1f - progress);
+                Vector3 position = record.LaunchOrigin;
+                position.y += UpwardLaunchHeight * eased;
+                bullet.transform.position = position;
+
+                if (bullet.rb != null)
+                    bullet.rb.velocity = Vector2.zero;
+
+                if (progress < 1f)
+                    return;
+
+                record.Launching = false;
+
+                if (bullet.col != null)
+                    bullet.col.enabled = record.ColliderWasEnabled;
+
+                bullet._moveWay = BulletMoveWay.Throw;
+                var targetPosition =
+                    new Il2CppSystem.Nullable<Vector2>(record.TargetPosition);
+                var flightTime =
+                    new Il2CppSystem.Nullable<float>(AttackFlightTime);
+
+                if (record.Target != null &&
+                    record.Target.Alive &&
+                    !record.Target.isMindControlled)
+                {
+                    bullet.ThrowTo(
+                        record.Target,
+                        targetPosition,
+                        flightTime
+                    );
+                }
+                else
+                {
+                    bullet.ThrowToNull(targetPosition, flightTime);
+                }
+            }
+            catch (Exception exception)
+            {
+                record.Launching = false;
+
+                try
+                {
+                    if (bullet.col != null)
+                        bullet.col.enabled = record.ColliderWasEnabled;
+
+                    bullet._moveWay = BulletMoveWay.Throw;
+                    bullet.ThrowToNull(
+                        new Il2CppSystem.Nullable<Vector2>(
+                            record.TargetPosition
+                        ),
+                        new Il2CppSystem.Nullable<float>(AttackFlightTime)
+                    );
+                }
+                catch
+                {
+                    // The normal Bullet.Die tracker will resolve a projectile
+                    // that cannot resume its intended throw.
+                }
+
+                PlantsPlus.Plugin.Logger.LogWarning(
+                    "[Ceasarweed] Upward launch transition recovered " +
+                    "safely: " + exception.Message
+                );
+            }
         }
 
         private void EndSpawning()
@@ -489,7 +671,11 @@ namespace PlantsPlus.Plants
             }
         }
 
-        private static void SpawnSalad(MelonCaltrop source, Zombie zombie)
+        private static void SpawnSalad(
+            Ceasarweed owner,
+            MelonCaltrop source,
+            Zombie zombie
+        )
         {
             CreateBullet creator = CreateBullet.Instance;
             if (creator == null || source == null || zombie == null)
@@ -501,7 +687,7 @@ namespace PlantsPlus.Plants
                 sourcePosition.y + 0.35f,
                 source.thePlantRow,
                 BulletType.Bullet_superMelon,
-                BulletMoveWay.Throw,
+                BulletMoveWay.Stable,
                 false
             );
 
@@ -512,16 +698,10 @@ namespace PlantsPlus.Plants
             bullet.fromType = (PlantType)CeasarweedID;
             bullet.theBulletRow = source.thePlantRow;
             bullet.Damage = 80;
-
-            Vector3 targetPosition = zombie.transform.position;
-            var position = new Il2CppSystem.Nullable<Vector2>(
-                new Vector2(targetPosition.x, targetPosition.y)
-            );
-            var flightTime = new Il2CppSystem.Nullable<float>(0.65f);
-            bullet.ThrowTo(zombie, position, flightTime);
+            owner.ConfigureLaunch(bullet, zombie);
         }
 
-        private void ApplySaladVisual(Bullet bullet)
+        private void ApplySaladVisual(Bullet? bullet)
         {
             if (saladSprite == null || bullet == null || bullet.gameObject == null)
                 return;
@@ -544,20 +724,33 @@ namespace PlantsPlus.Plants
             }
         }
 
-        private static bool Resolve(Bullet bullet, bool hit)
+        private static bool Resolve(Bullet? bullet, bool hit)
         {
             if (bullet == null)
                 return false;
 
             int id = bullet.GetInstanceID();
-            ProjectileRecord record;
+            ProjectileRecord? record;
             if (!projectiles.TryGetValue(id, out record) || record == null || record.Resolved)
                 return false;
 
+            return ResolveRecord(id, record, hit);
+        }
+
+        private static bool ResolveRecord(
+            int id,
+            ProjectileRecord? record,
+            bool hit
+        )
+        {
+            if (record == null || record.Resolved)
+                return false;
+
             record.Resolved = true;
+            RestoreProjectileCollider(record);
             projectiles.Remove(id);
 
-            Ceasarweed owner = record.Owner;
+            Ceasarweed? owner = record.Owner;
             if (owner == null || record.Volley != owner.currentVolley)
                 return true;
 
@@ -579,7 +772,7 @@ namespace PlantsPlus.Plants
             return true;
         }
 
-        private static void NotifyExternalMiss(Bullet bullet)
+        private static void NotifyExternalMiss(Bullet? bullet)
         {
             if (bullet == null || bullet._moveWay != BulletMoveWay.Throw)
                 return;
@@ -619,13 +812,51 @@ namespace PlantsPlus.Plants
         private static void RemoveOwnedProjectiles(Ceasarweed owner)
         {
             var ids = new List<int>();
+            var ownedRecords = new List<ProjectileRecord>();
             foreach (var pair in projectiles)
             {
                 if (pair.Value != null && pair.Value.Owner == owner)
+                {
                     ids.Add(pair.Key);
+                    ownedRecords.Add(pair.Value);
+                }
             }
             for (int index = 0; index < ids.Count; index++)
                 projectiles.Remove(ids[index]);
+
+            for (int index = 0; index < ownedRecords.Count; index++)
+            {
+                ProjectileRecord record = ownedRecords[index];
+                RestoreProjectileCollider(record);
+
+                try
+                {
+                    if (record.Bullet != null && !record.Bullet.dying)
+                        record.Bullet.Die();
+                }
+                catch
+                {
+                    // The board may already be unloading.
+                }
+            }
+        }
+
+        private static void RestoreProjectileCollider(
+            ProjectileRecord record
+        )
+        {
+            if (record == null || record.Bullet == null)
+                return;
+
+            try
+            {
+                if (record.Bullet.col != null)
+                    record.Bullet.col.enabled = record.ColliderWasEnabled;
+            }
+            catch
+            {
+                // The projectile can already be in its native death path.
+            }
         }
 
         [HarmonyPatch(typeof(MelonCaltrop), nameof(MelonCaltrop.OnAttack))]
@@ -653,7 +884,7 @@ namespace PlantsPlus.Plants
 
                     activeSpawner = behaviour;
                     for (int index = 0; index < shotCount; index++)
-                        SpawnSalad(__instance, zombie);
+                        SpawnSalad(behaviour, __instance, zombie);
                 }
                 finally
                 {
@@ -671,7 +902,7 @@ namespace PlantsPlus.Plants
         {
             [HarmonyPostfix]
             [HarmonyPriority(Priority.Last)]
-            private static void Postfix(Bullet __result, bool fromEnermy)
+            private static void Postfix(Bullet? __result, bool fromEnermy)
             {
                 if (__result != null)
                     externalMissesReported.Remove(__result.GetInstanceID());
@@ -934,6 +1165,88 @@ namespace PlantsPlus.Plants
             PlantsPlus.Plugin.Logger.LogInfo(
                 "[Solar Firnace] +45s bought | next cost = " + clickCost
             );
+        }
+
+        // SnowMap only recognizes PlantType.PineFurnace when it builds the
+        // set of tiles protected from snow. Solar Firnace keeps the native
+        // PineFurnace component, but its custom PlantType made that exact
+        // native check miss it. Present it as a normal Firnace only while
+        // SnowMap calculates protection, then immediately restore its ID.
+        [HarmonyPatch(typeof(SnowMap), "Freeze")]
+        private static class SnowMap_Freeze_SolarFirnaceWarmth_Patch
+        {
+            [HarmonyPrefix]
+            private static void Prefix(out List<Plant> __state)
+            {
+                __state = new List<Plant>();
+
+                try
+                {
+                    Board board = Board.Instance;
+                    if (board == null ||
+                        board.boardEntity == null ||
+                        board.boardEntity.plantArray == null)
+                    {
+                        return;
+                    }
+
+                    Il2CppSystem.Collections.Generic.List<Plant> plants =
+                        board.boardEntity.plantArray;
+
+                    for (int index = 0; index < plants.Count; index++)
+                    {
+                        Plant plant = plants[index];
+                        if (plant == null ||
+                            (int)plant.thePlantType != SolarFirnaceID)
+                        {
+                            continue;
+                        }
+
+                        __state.Add(plant);
+                        plant.thePlantType = PlantType.PineFurnace;
+                    }
+                }
+                catch (Exception exception)
+                {
+                    RestoreSolarFirnaces(__state);
+                    PlantsPlus.Plugin.Logger.LogWarning(
+                        "[Solar Firnace] Snow protection setup failed safely: " +
+                        exception.Message
+                    );
+                }
+            }
+
+            [HarmonyPostfix]
+            private static void Postfix(List<Plant> __state)
+            {
+                RestoreSolarFirnaces(__state);
+            }
+
+            [HarmonyFinalizer]
+            private static Exception Finalizer(
+                Exception __exception,
+                List<Plant> __state
+            )
+            {
+                RestoreSolarFirnaces(__state);
+                return __exception;
+            }
+
+            private static void RestoreSolarFirnaces(List<Plant> plants)
+            {
+                if (plants == null)
+                    return;
+
+                for (int index = 0; index < plants.Count; index++)
+                {
+                    Plant plant = plants[index];
+                    if (plant != null &&
+                        plant.thePlantType == PlantType.PineFurnace)
+                    {
+                        plant.thePlantType = (PlantType)SolarFirnaceID;
+                    }
+                }
+            }
         }
     }
 }

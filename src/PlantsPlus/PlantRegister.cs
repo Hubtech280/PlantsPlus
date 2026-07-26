@@ -376,7 +376,6 @@ namespace PlantsPlus.Core
 
             CustomCore.TypeMgrExtra.IsPumpkin.Add(customType);
             CustomCore.TypeMgrExtra.IsFirePlant.Add(customType);
-            CustomCore.TypeMgrExtra.UncrashablePlants.Add(customType);
 
             RegisterWitchfireOdysseyBuffs(customType);
 

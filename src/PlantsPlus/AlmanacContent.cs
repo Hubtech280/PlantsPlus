@@ -41,7 +41,7 @@ namespace PlantsPlus.Core
 
         private static string Bullet(string text)
         {
-            return Red("• " + text);
+            return Red("\u2022 " + text);
         }
 
         private static string LoreWithRecipe(string lore, string recipe)
@@ -69,8 +69,8 @@ namespace PlantsPlus.Core
             Brown("Special:") + "\n" +
             Bullet("Protects another plant on its tile like a normal Pumpkin.") + "\n" +
             Bullet(
-                "Keeps Snow Lotus's passive charge cycle and gains one " +
-                "additional charge whenever it actually loses health."
+                "Gains charges over time and gains one additional charge " +
+                "whenever it actually loses health."
             ) + "\n" +
             Bullet(
                 "At 5 charges, consumes the cycle to heal the protected " +
@@ -96,8 +96,7 @@ namespace PlantsPlus.Core
             Brown("Special:") + "\n" +
             Bullet("Blocks zombies as a defensive Nut-type plant.") + "\n" +
             Bullet(
-                "Retains Bamboo's native counterattack and collision " +
-                "behavior against zombies."
+                "Counterattacks zombies that collide with or bite it."
             ),
             LoreWithRecipe(
                 "Bambnut has spent years studying the ancient art of " +
@@ -145,7 +144,8 @@ namespace PlantsPlus.Core
             Stat("Toughness", "4000") + "\n" +
             Brown("Special:") + "\n" +
             Bullet(
-                "Deals 300 damage to biting zombies and applies Irritated."
+                "Deals 50 base damage to biting zombies, plus 5 damage for " +
+                "every 30 stored charges, and applies Irritated."
             ) + "\n" +
             Bullet(
                 "While unlit, its protected non-flying plant deals 2x " +
@@ -163,13 +163,20 @@ namespace PlantsPlus.Core
                 "A normal sacrifice grants 1800 + (the plant's sun cost x " +
                 "10) energy. If that plant has a Doom-shroom or Jalapeno " +
                 "fusion, the fusion is returned as a card and grants 3600 " +
-                "energy; Doom-shroom takes priority."
+                "energy; Doom-shroom takes priority. Zero-cost plants count " +
+                "as costing 25 Sun."
             ) + "\n" +
             Bullet(
-                "Clicking a lit Witchfire Pumpkin consumes all stored " +
-                "energy after any sacrifice gain and triggers both " +
-                "explosions. Death triggers the same double explosion " +
-                "whether lit or not."
+                "Its charge display shows READY when a lit sacrifice is " +
+                "available. Clicking then consumes the plant and all stored " +
+                "charge, triggers both explosions, and leaves Witchfire " +
+                "unlit for 45 seconds. Death triggers the double explosion " +
+                "without processing another sacrifice."
+            ) + "\n" +
+            Bullet(
+                "An Enflamed zombie dying in its lane grants 100 charge; an " +
+                "Irritated zombie grants 250 instead. Nearby Doom-shroom " +
+                "explosions also grant charge."
             ) + "\n" +
             Brown("Odyssey Modifiers:") + "\n" +
             Red(
@@ -228,38 +235,33 @@ namespace PlantsPlus.Core
             new AlmanacEntry(
                 "Inferno Torchflower",
                 Brown(
-                    "Inferno Torchflower stores the Sun extracted from " +
-                    "nearby projectiles, then releases the entire reserve " +
-                    "after gathering enough fire energy."
+                    "Inferno Torchflower behaves like a regular Torchflower " +
+                    "until fire awakens her furnace. While lit, she stores " +
+                    "her Sun for a multiplied manual harvest."
                 ) + "\n\n" +
-                Brown("Usage Conditions: ") + Red("Advanced Alt") + "\n" +
                 Stat("Sun Output", "25 / 25s") + "\n" +
                 Stat("Maximum Energy", "250") + "\n" +
+                Stat("Maximum Multiplier", "x2.5") + "\n" +
                 Brown("Special:") + "\n" +
                 Bullet(
-                    "Keeps Torchflower's native production cycle and " +
-                    "projectile detection."
+                    "Before being ignited, behaves like a regular " +
+                    "Torchflower and drops her Sun automatically."
                 ) + "\n" +
                 Bullet(
-                    "Whenever she produces Sun, converts eligible plant " +
-                    "and hypnotized-zombie projectiles within 1.5 tiles " +
-                    "into 5 stored Sun per projectile instead of dropping " +
-                    "that Sun immediately."
+                    "Each valid Jalapeno fire line grants 50 energy, up to " +
+                    "250. Once lit, all Sun she produces or extracts from " +
+                    "nearby projectiles is stored instead of dropped."
                 ) + "\n" +
                 Bullet(
-                    "Gains 25 energy whenever a fire line ignites her, up " +
-                    "to 250 energy."
-                ) + "\n" +
-                Bullet(
-                    "At 250 energy, click her to consume all energy and " +
-                    "release every stored Sun onto the lawn."
+                    "Click her to release the stored Sun. Every 50 energy " +
+                    "adds x0.5 to the payout, up to x2.5; clicking resets " +
+                    "both the reserve and energy to 0."
                 ),
                 LoreWithConversionRecipe(
-                    "Inferno Torchflower calls every converted projectile " +
-                    "a contribution to her \"sunny-day fund.\" She refuses " +
-                    "to spend a single Sun until the flames are exactly " +
-                    "right, then empties the entire fund onto the lawn at " +
-                    "once. Her accountant has requested protective eyewear.",
+                    "Inferno Torchflower calls every stored ray a deposit " +
+                    "in her \"sunny-day fund.\" The hotter her furnace gets, " +
+                    "the more generous the withdrawal becomes. Her " +
+                    "accountant still recommends waiting for 250.",
                     "Sunflower <-> Torchwood"
                 )
             );
@@ -272,7 +274,6 @@ namespace PlantsPlus.Core
                     "then periodically replaces the copied ammunition with " +
                     "Explode-o-peas."
                 ) + "\n\n" +
-                Brown("Usage Conditions: ") + Red("Advanced Alt") + "\n" +
                 Stat("Toughness", "4000") + "\n" +
                 Stat("Damage", "Copied / 50% attack rate") + "\n" +
                 Brown("Special:") + "\n" +
@@ -283,13 +284,14 @@ namespace PlantsPlus.Core
                 ) + "\n" +
                 Bullet(
                     "For every compatible plant except Cherry Shooter, " +
-                    "every fourth copied volley is replaced by native " +
+                    "every fourth copied volley is replaced by " +
                     "Explode-o-peas."
                 ) + "\n" +
                 Bullet(
                     "With Cherry Shooter inside, every copied projectile is " +
-                    "an Explode-o-pea and the plant keeps Pumpkin Pod's " +
-                    "half-speed firing cadence."
+                    "an Explode-o-pea and the plant attacks once every 3 " +
+                    "seconds. Other inner plants keep the normal copied " +
+                    "cadence."
                 ) + "\n" +
                 Bullet(
                     "Using the Shovel on Pumpkin Podbomber removes its pod " +
@@ -302,6 +304,328 @@ namespace PlantsPlus.Core
                     "answering every number with BOOM, but Pumpkin " +
                     "Podbomber admits the enthusiasm is hard to dislike.",
                     "Pumpkin <-> Shovel"
+                )
+            );
+
+        public static readonly AlmanacEntry NotAPea =
+            new AlmanacEntry(
+                "Not-a-pea",
+                Brown(
+                    "Not-a-pea fires spinning saw-peas that keep cutting " +
+                    "through a crowd and may decide to stay for a while."
+                ) + "\n\n" +
+                Stat("Damage", "20 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Its saw projectile pierces zombies instead of " +
+                    "disappearing after the first hit."
+                ) + "\n" +
+                Bullet(
+                    "Every zombie hit has a 25% chance to catch the saw."
+                ) + "\n" +
+                Bullet(
+                    "An attached saw deals 10 damage every 1.5 seconds for " +
+                    "10 seconds, then disappears."
+                ),
+                LoreWithRecipe(
+                    "Not-a-pea is tired of being asked whether he is a pea " +
+                    "pretending to be a saw or a saw pretending to be a " +
+                    "pea. He filed the question under \"things to cut " +
+                    "short\" and shredded the entire folder.",
+                    "Saw-me-not > Peashooter"
+                )
+            );
+
+        public static readonly AlmanacEntry NotAStormCommando =
+            new AlmanacEntry(
+                "Not-a-storm Commando",
+                Brown(
+                    "Not-a-storm Commando combines Pea-storm Commando's " +
+                    "entire firing pattern with a storm of persistent " +
+                    "saw-peas."
+                ) + "\n\n" +
+                Brown("Usage Conditions: ") + Red("Odyssey Mode") + "\n" +
+                Stat("Projectile Damage", "20 each") + "\n" +
+                Stat("Attached Damage", "10 / 1.5s for 10s") + "\n" +
+                Stat("Attack Pattern", "Pea-storm Commando's volley") +
+                "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Uses Pea-storm Commando's attack cadence, " +
+                    "angles, and projectile count."
+                ) + "\n" +
+                Bullet(
+                    "Each saw-pea deals 20 base damage and pierces every " +
+                    "zombie in its path."
+                ) + "\n" +
+                Bullet(
+                    "Every zombie hit has a 25% chance to catch the saw."
+                ) + "\n" +
+                Bullet(
+                    "An attached saw deals half of its projectile's damage " +
+                    "every 1.5 seconds for 10 seconds. At base damage, that " +
+                    "is 10 per tick and 60 total damage."
+                ) + "\n" +
+                Brown("Odyssey Modifiers:") + "\n" +
+                Red(
+                    "None. Not-a-storm Commando is a strong Odyssey fusion; " +
+                    "its complete saw-pea volley is always active."
+                ),
+                LoreWithRecipe(
+                    "Not-a-storm Commando calls every operation \"surgical " +
+                    "precision.\" The lawn accepts the description, mostly " +
+                    "because every briefing ends with six smoking barrels, " +
+                    "a pile of sawdust, and nobody brave enough to ask a " +
+                    "follow-up question.",
+                    "Saw-me-not > Pea-storm Commando"
+                )
+            );
+
+        public static readonly AlmanacEntry FrostFurflower =
+            new AlmanacEntry(
+                "Frost Furflower",
+                Brown(
+                    "Frost Furflower produces Sun normally, then turns a " +
+                    "direct snowball hit into a very profitable cold snap."
+                ) + "\n\n" +
+                Stat("Sun Output", "25 / 25s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Produces Sun with the normal Sunflower cycle."
+                ) + "\n" +
+                Bullet(
+                    "When struck by a snowball, immediately drops 100 Sun."
+                ) + "\n" +
+                Bullet(
+                    "The same hit freezes every other freezable plant in " +
+                    "the surrounding 3x3 area. Frost Furflower is not " +
+                    "frozen by its own cold snap."
+                ),
+                LoreWithRecipe(
+                    "Frost Furflower considers snowball fights a renewable " +
+                    "energy program. Her neighbors consider them an " +
+                    "unannounced cryogenic experiment. Both sides agree the " +
+                    "Sun is excellent; negotiations concerning the frozen " +
+                    "petals are still ongoing.",
+                    "Hoarfrost Lichen > Sunflower"
+                )
+            );
+
+
+        public static readonly AlmanacEntry Doomtronion =
+            new AlmanacEntry(
+                "Doomtronion",
+                Brown(
+                    "Doomtronion focuses the power of nearby Amp-nions into " +
+                    "one devastating electrical shot that arcs through the " +
+                    "horde."
+                ) + "\n\n" +
+                Stat("Damage", "100 / 1.5s") + "\n" +
+                Stat("Attack Range", "5 x 5") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Attacks one zombie inside its 5 x 5 range."
+                ) + "\n" +
+                Bullet(
+                    "Idle Amp-nions and Doomtronions within range connect " +
+                    "to the attacker, each adding 150 damage to the shot."
+                ) + "\n" +
+                Bullet(
+                    "The shot arcs from its first target to a maximum of 3 " +
+                    "nearby zombies, dealing half damage to each."
+                ) + "\n" +
+                Bullet(
+                    "Every struck zombie becomes Irradiated for 10 seconds."
+                ) + "\n" +
+                Bullet(
+                    "Every struck zombie has a 25% chance to trigger a " +
+                    "Doom-shroom explosion at its position."
+                ) + "\n" +
+                Bullet(
+                    "The triggered explosion deals 1800 damage and does " +
+                    "not leave a crater."
+                ),
+                LoreWithRecipe(
+                    "Doomtronion says the strange glow is perfectly normal " +
+                    "and asks everyone to stop measuring it. The Geiger " +
+                    "counter has declined to comment because it has been " +
+                    "screaming continuously since breakfast.",
+                    "Amp-nion > Doom-shroom"
+                )
+            );
+
+        public static readonly AlmanacEntry LichenPea =
+            new AlmanacEntry(
+                "Lichen-pea",
+                Brown(
+                    "Lichen-pea fires freezing peas while turning the area " +
+                    "around each struck zombie into a hazard for nearby " +
+                    "plants."
+                ) + "\n\n" +
+                Stat("Damage", "20 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Its peas inflict Cold, slowing every zombie they hit."
+                ) + "\n" +
+                Bullet(
+                    "Every zombie hit has a 25% chance to freeze between " +
+                    "2 and 4 random freezable plants in the surrounding " +
+                    "3x3 area."
+                ) + "\n" +
+                Bullet(
+                    "If fewer than the chosen number of valid plants are " +
+                    "nearby, every valid target in range is frozen."
+                ),
+                LoreWithRecipe(
+                    "Lichen-pea insists the white coat is practical winter " +
+                    "camouflage, not a fashion statement. He also insists " +
+                    "that freezing his own teammates builds character. His " +
+                    "teammates are currently drafting a strongly worded " +
+                    "response.",
+                    "Hoarfrost Lichen > Peashooter"
+                )
+            );
+
+        public static readonly AlmanacEntry LogicBlover =
+            new AlmanacEntry(
+                "Logic Blover",
+                Brown(
+                    "Logic Blover considers every outcome before choosing " +
+                    "one at random. Somehow, this makes perfect sense to him."
+                ) + "\n\n" +
+                Brown("Usage Condition: ") + Red("Harvest Mode") + "\n" +
+                Stat("Toughness", "300") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Blows zombies backwards while remaining on the lawn."
+                ) + "\n" +
+                Bullet(
+                    "Each zombie independently receives Ember, Cold, " +
+                    "Butter or Poison, matching the four coloured petals."
+                ) + "\n" +
+                Bullet(
+                    "While Logic Blover remains on the lawn, using Blover, " +
+                    "Lucky Blover or Mimic Rye increases its Gift Box luck " +
+                    "by 5%, 15% or 16% respectively."
+                ) + "\n" +
+                Bullet(
+                    "Each Gift Box rolls this accumulated chance to receive " +
+                    "the lucky result."
+                ) + "\n" +
+                Bullet(
+                    "Using a Gold Bean on Logic Blover spends 10,000 money " +
+                    "to make it blow again."
+                ),
+                Brown(
+                    "A Harvest-exclusive Red Card with no fusion recipe. " +
+                    "Logic Blover keeps careful track of every favourable " +
+                    "outcome, then insists it was all perfectly logical."
+                )
+            );
+
+        public static readonly AlmanacEntry SolarSharpshooter =
+            new AlmanacEntry(
+                "Solar Sharpshooter",
+                Brown(
+                    "Solar Sharpshooter converts every successful piercing " +
+                    "hit into usable sunlight."
+                ) + "\n\n" +
+                Stat("Damage", "30 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Fires a projectile that pierces multiple zombies.") + "\n" +
+                Bullet(
+                    "Each zombie actually hit by the projectile immediately " +
+                    "grants 25 sun."
+                ) + "\n" +
+                Bullet(
+                    "A single shot grants sun once per pierced zombie."
+                ),
+                LoreWithRecipe(
+                    "Solar Sharpshooter never misses an opportunity to make " +
+                    "hay while the sun shines. The zombies object to being " +
+                    "classified as an opportunity.",
+                    "Spruce Sharpshooter > Sunflower"
+                )
+            );
+
+        public static readonly AlmanacEntry SeaBallista =
+            new AlmanacEntry(
+                "Sea Ballista",
+                Brown(
+                    "Sea Ballista uses the water to hold its ground while " +
+                    "its explosive bolts keep nearby zombies away."
+                ) + "\n\n" +
+                Stat("Damage", "80 / 3s") + "\n" +
+                Stat("Range", "3.5 tiles") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Aquatic plant that occupies two adjacent tiles.") + "\n" +
+                Bullet(
+                    "Bolts pierce up to 2 times and explode 0.3s after " +
+                    "hitting a zombie."
+                ) + "\n" +
+                Bullet(
+                    "Each delayed explosion knocks its struck zombie back."
+                ),
+                LoreWithRecipe(
+                    "Sea Ballista claims the tide pulls every bolt back for " +
+                    "reuse. Nobody has had the courage to ask why the bolts " +
+                    "still explode.",
+                    "Spruce Ballista > Sea-shroom"
+                )
+            );
+
+        public static readonly AlmanacEntry Pineshooter =
+            new AlmanacEntry(
+                "Pineshooter",
+                Brown(
+                    "Pineshooter launches entire pine trees to drive " +
+                    "zombies back into their own crowd."
+                ) + "\n\n" +
+                Stat("Damage", "40 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Each pine knocks the first zombie it hits backward."
+                ) + "\n" +
+                Bullet(
+                    "If the knocked zombie crashes into another zombie, " +
+                    "both take 40 additional damage and are briefly stunned."
+                ) + "\n" +
+                Bullet("Immune to freeze and glaciation."),
+                LoreWithRecipe(
+                    "Pineshooter was told that throwing the whole tree was " +
+                    "wasteful. He points out that nobody has volunteered to " +
+                    "retrieve one from the zombies.",
+                    "Peashooter > Spruce Sharpshooter"
+                )
+            );
+
+        public static readonly AlmanacEntry Icytronion =
+            new AlmanacEntry(
+                "Icytronion",
+                Brown(
+                    "Icytronion conducts freezing electricity through " +
+                    "nearby Amp-nions and clustered zombies."
+                ) + "\n\n" +
+                Stat("Damage", "100 / 1.5s") + "\n" +
+                Stat("Attack Range", "5 x 5") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Idle Amp-nions and Icytronions within range channel " +
+                    "power to the attacker, each adding 150 damage."
+                ) + "\n" +
+                Bullet(
+                    "Each shot can arc to up to 3 nearby zombies for half " +
+                    "damage."
+                ) + "\n" +
+                Bullet(
+                    "Every struck zombie is slowed for 10 seconds and has " +
+                    "a 25% chance to be frozen."
+                ) + "\n" +
+                Bullet("Immune to freeze and glaciation."),
+                LoreWithRecipe(
+                    "Icytronion insists that lightning never feels cold. " +
+                    "The frozen zombies are currently unable to disagree.",
+                    "Amp-nion > Ice-shroom"
                 )
             );
 
@@ -321,12 +645,13 @@ namespace PlantsPlus.Core
             ) + "\n" +
             Bullet(
                 "Bucket and Football Helmet select iron and helmet peas. A " +
-                "Chrono Disc or Portal Heart selects a portal pea."
+                "Chrono Disc selects a portal pea."
             ) + "\n" +
             Bullet(
                 "Jack-in-the-box selects a Zomppelin bomb projectile, while " +
                 "Giga Mecha Fragments select a Kirov Flagship bomb. Both " +
-                "explode in an area on impact."
+                "explode in an area on impact; the Flagship shot deals 100 " +
+                "contact damage and 60 splash damage before the metal bonus."
             ) + "\n" +
             Bullet(
                 "The copied projectile remains selected until another " +

@@ -1,5 +1,6 @@
 using HarmonyLib;
 using Il2Cpp;
+using CustomizeLib.BepInEx;
 using System;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace PlantsPlus.Plants
     {
         public const int IcebergShroomID = 6003;
         public const int Damage = 40;
+        public const int NativeExplosionDamage = 20;
         public const float FreezeDuration = 8f;
         public const float ImmuneSlowDuration = 8f;
 
@@ -164,6 +166,7 @@ namespace PlantsPlus.Plants
             int frozen = 0;
             int nativeSlowed = 0;
             int forcedSlowed = 0;
+            int damageCompleted = 0;
             int skipped = 0;
 
             for (int i = 0; i < zombies.Count; i++)
@@ -188,6 +191,36 @@ namespace PlantsPlus.Plants
                 {
                     skipped++;
                     continue;
+                }
+
+                // IceShroom.Explode has already dealt its hard-coded 20.
+                // Complete the custom plant's actual runtime total to 40;
+                // changing PlantData alone cannot affect that native method.
+                int missingDamage = Mathf.Max(
+                    0,
+                    Damage - NativeExplosionDamage
+                );
+
+                if (missingDamage > 0)
+                {
+                    try
+                    {
+                        ((Entity)zombie).TakeDamage(
+                            missingDamage,
+                            plant.ToIDamageMaker(),
+                            DamageType.IceAll,
+                            (PlantType)IcebergShroomID,
+                            false
+                        );
+                        damageCompleted++;
+                    }
+                    catch (Exception exception)
+                    {
+                        Plugin.Logger.LogWarning(
+                            "[IcebergShroom] Runtime damage completion " +
+                            "failed safely: " + exception.Message
+                        );
+                    }
                 }
 
                 // The vanilla Ice-shroom explosion has already run. Calling
@@ -222,6 +255,8 @@ namespace PlantsPlus.Plants
 
             Plugin.Logger.LogInfo(
                 "[IcebergShroom] Enhanced freeze applied" +
+                " | Runtime damage = " + Damage +
+                " | Damage-completed targets = " + damageCompleted +
                 " | Frozen = " + frozen +
                 " | Native cold accepted = " + nativeSlowed +
                 " | Final-speed immune slow = " + forcedSlowed +

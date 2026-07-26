@@ -8,11 +8,16 @@
     <AssemblyName>PlantsPlus</AssemblyName>
     <RootNamespace>PlantsPlus</RootNamespace>
     <OutputType>Library</OutputType>
-    <Version>1.0.0-release</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>None</DebugType>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.102</AssemblyVersion>
+    <FileVersion>1.1.0.102</FileVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath>../../build/</OutputPath>
+    <OutputPath>../build/</OutputPath>
     <EnableMagnetOPea Condition="'$(EnableMagnetOPea)' == ''">true</EnableMagnetOPea>
   </PropertyGroup>
 
@@ -25,7 +30,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Magnet-o-pea is enabled for the release; set EnableMagnetOPea=false for a fallback build. -->
+    <!-- Magnet-o-pea is enabled for the beta; set EnableMagnetOPea=false for a fallback build. -->
     <Compile Remove="Plants/MagnetOPea.cs" Condition="'$(EnableMagnetOPea)' != 'true'" />
 
     <EmbeddedResource Include="Resources/AssetBundles/bambnut"
@@ -48,6 +53,43 @@
                       LogicalName="PlantsPlus.Resources.AssetBundles.ceasarweed" />
     <EmbeddedResource Include="Resources/AssetBundles/solarfirnace"
                       LogicalName="PlantsPlus.Resources.AssetBundles.solarfirnace" />
+    <EmbeddedResource Include="Resources/AssetBundles/notapea"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.notapea" />
+    <EmbeddedResource Include="Resources/AssetBundles/notastormcommando"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.notastormcommando" />
+    <EmbeddedResource Include="Resources/AssetBundles/frostfurflower"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.frostfurflower" />
+    <EmbeddedResource Include="Resources/AssetBundles/doomtronion"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.doomtronion" />
+    <EmbeddedResource Include="Resources/Sprites/doomtronion_biu.png"
+                      LogicalName="PlantsPlus.Resources.Sprites.doomtronion_biu.png" />
+    <EmbeddedResource Include="Resources/Sprites/night_roof_card.png"
+                      LogicalName="PlantsPlus.Resources.Sprites.night_roof_card.png" />
+    <EmbeddedResource Include="Resources/Sprites/plants_v1_1_logo.png"
+                      LogicalName="PlantsPlus.Resources.Sprites.plants_v1_1_logo.png" />
+    <EmbeddedResource Include="Resources/Sprites/EditorMaps/*.png" />
+    <EmbeddedResource Include="Resources/AssetBundles/lichenpea"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.lichenpea" />
+    <EmbeddedResource Include="Resources/AssetBundles/logicblover"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.logicblover" />
+    <EmbeddedResource Include="Resources/AssetBundles/solarsharpshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.solarsharpshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_solarsharpshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_solarsharpshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/seaballista"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.seaballista" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_seaballista"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_seaballista" />
+    <EmbeddedResource Include="Resources/AssetBundles/pineshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.pineshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_pineshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_pineshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/icytronion"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.icytronion" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_lichenpea"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_lichenpea" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_notapea"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_notapea" />
     <EmbeddedResource Include="Resources/AssetBundles/bullet_magnetopea"
                       LogicalName="PlantsPlus.Resources.AssetBundles.bullet_magnetopea"
                       Condition="'$(EnableMagnetOPea)' == 'true'" />
@@ -66,10 +108,14 @@
     <Reference Include="Assembly-CSharp" HintPath="$(Il2CppRefs)/Assembly-CSharp.dll" Private="false" />
     <Reference Include="Il2Cppmscorlib" HintPath="$(Il2CppRefs)/Il2Cppmscorlib.dll" Private="false" />
     <Reference Include="Il2CppSystem" HintPath="$(Il2CppRefs)/Il2CppSystem.dll" Private="false" />
+    <Reference Include="Il2CppSystem.Core" HintPath="$(Il2CppRefs)/Il2CppSystem.Core.dll" Private="false" />
     <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(Il2CppRefs)/UnityEngine.AssetBundleModule.dll" Private="false" />
     <Reference Include="UnityEngine.AnimationModule" HintPath="$(Il2CppRefs)/UnityEngine.AnimationModule.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(Il2CppRefs)/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ImageConversionModule" HintPath="$(Il2CppRefs)/UnityEngine.ImageConversionModule.dll" Private="false" />
     <Reference Include="UnityEngine.Physics2DModule" HintPath="$(Il2CppRefs)/UnityEngine.Physics2DModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UIModule" HintPath="$(Il2CppRefs)/UnityEngine.UIModule.dll" Private="false" />
+    <Reference Include="Unity.TextMeshPro" HintPath="$(Il2CppRefs)/Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Il2CppRefs)/UnityEngine.UI.dll" Private="false" />
   </ItemGroup>
 

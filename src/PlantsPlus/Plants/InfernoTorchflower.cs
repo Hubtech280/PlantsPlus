@@ -8,10 +8,10 @@ using UnityEngine;
 namespace PlantsPlus.Plants
 {
     /// <summary>
-    /// Advanced alternate form of Infernowood. TorchSunflower keeps the
-    /// native production and projectile-conversion logic; this bridge stores
-    /// only the 5-Sun drops created from converted projectiles and releases
-    /// them after the custom fire-energy requirement is met.
+    /// Advanced alternate form of Infernowood. Before ignition it behaves
+    /// exactly like TorchSunflower. Once lit, its normal production and the
+    /// Sun extracted from nearby projectiles are stored until clicked, then
+    /// multiplied by the current fire-energy tier.
     /// </summary>
     public class InfernoTorchflower : MonoBehaviour
     {
@@ -21,7 +21,7 @@ namespace PlantsPlus.Plants
         public const float ProduceInterval = 25f;
         public const int ProjectileSunValue = 5;
         public const float ProjectileConversionRadius = 1.5f;
-        public const int FireEnergyPerIgnition = 25;
+        public const int FireEnergyPerIgnition = 50;
         public const int MaximumEnergy = 250;
 
         // Registration fallbacks are replaced with Torchflower's exact native
@@ -36,9 +36,11 @@ namespace PlantsPlus.Plants
         private static bool plantDataMirrorLogged;
         private static bool prefabBridgeLogged;
         private static bool nativeRecoveryLogged;
-        private int storedProjectileSun;
+        private int storedSun;
         private int capturedThisCycle;
         private bool naturalSunCreatedThisCycle;
+        private bool chargeTextRegistered;
+        private bool chargeUiWaitLogged;
 
         public InfernoTorchflower(IntPtr ptr) : base(ptr) { }
 
@@ -65,18 +67,85 @@ namespace PlantsPlus.Plants
                 0,
                 MaximumEnergy
             );
+            TryRegisterChargeText(plant);
             UpdateEnergyText(plant);
 
             Plugin.Logger.LogInfo(
                 "[Inferno Torchflower] Ready" +
                 " | Native behaviour = TorchSunflower" +
-                " | Natural Sun = " + NaturalSunOutput +
-                " / " + ProduceInterval + "s" +
-                " | Projectile Sun = stored " + ProjectileSunValue +
-                " each" +
+                " | Normal mode = native TorchSunflower" +
+                " | Lit mode = stores all produced Sun" +
                 " | Fire energy = +" + FireEnergyPerIgnition +
-                " | Maximum energy = " + MaximumEnergy
+                " | Maximum energy = " + MaximumEnergy +
+                " | Maximum multiplier = x2.5"
             );
+        }
+
+        public void Update()
+        {
+            TorchSunflower? plant = NativePlant;
+
+            if (plant == null || plant.dying)
+                return;
+
+            plant.attributeCount = Mathf.Clamp(
+                plant.attributeCount,
+                0,
+                MaximumEnergy
+            );
+
+            if (!chargeTextRegistered)
+                TryRegisterChargeText(plant);
+        }
+
+        private void TryRegisterChargeText(TorchSunflower plant)
+        {
+            if (chargeTextRegistered || plant == null)
+                return;
+
+            try
+            {
+                var text = plant.RegisterText(
+                    new Color(1f, 0.55f, 0.1f, 1f),
+                    new System.Func<string>(GetChargeText),
+                    new Vector2(150f, 28f)
+                );
+
+                chargeTextRegistered = text != null;
+
+                if (text != null)
+                {
+                    text.enableAutoSizing = false;
+                    text.fontSize = 18f;
+                    text.rectTransform.sizeDelta =
+                        new Vector2(150f, 28f);
+                    chargeUiWaitLogged = false;
+                }
+            }
+            catch (Exception exception)
+            {
+                if (!chargeUiWaitLogged)
+                {
+                    chargeUiWaitLogged = true;
+                    Plugin.Logger.LogWarning(
+                        "[Inferno Torchflower] Charge UI is not ready yet: " +
+                        exception.Message
+                    );
+                }
+            }
+        }
+
+        private string GetChargeText()
+        {
+            TorchSunflower? plant = NativePlant;
+            int energy = plant != null
+                ? Mathf.Clamp(plant.attributeCount, 0, MaximumEnergy)
+                : 0;
+
+            float multiplier = energy / 100f;
+            return "E " + energy + "/" + MaximumEnergy +
+                " | x" + multiplier.ToString("0.0") +
+                " | S " + Mathf.Max(0, storedSun);
         }
 
         private static bool IsInfernoTorchflower(Plant? plant)
@@ -92,22 +161,34 @@ namespace PlantsPlus.Plants
             naturalSunCreatedThisCycle = false;
         }
 
-        private void ObserveNaturalSun()
+        private void StoreNaturalSun()
         {
             naturalSunCreatedThisCycle = true;
+            StoreSun(NaturalSunOutput);
         }
 
-        private void StoreProjectileSun()
+        private void StoreSun(int amount)
         {
-            if (storedProjectileSun <= int.MaxValue - ProjectileSunValue)
-                storedProjectileSun += ProjectileSunValue;
-            else
-                storedProjectileSun = int.MaxValue;
+            if (amount <= 0)
+                return;
 
-            if (capturedThisCycle <= int.MaxValue - ProjectileSunValue)
-                capturedThisCycle += ProjectileSunValue;
+            if (storedSun <= int.MaxValue - amount)
+                storedSun += amount;
+            else
+                storedSun = int.MaxValue;
+
+            if (capturedThisCycle <= int.MaxValue - amount)
+                capturedThisCycle += amount;
             else
                 capturedThisCycle = int.MaxValue;
+
+            // Stored production shares the visible counter with energy, so
+            // refresh it on every captured projectile instead of waiting for
+            // the next natural production cycle or click.
+            TorchSunflower? plant = NativePlant;
+
+            if (plant != null && !plant.dying)
+                UpdateEnergyText(plant);
         }
 
         private void FinishSunCapture()
@@ -116,9 +197,9 @@ namespace PlantsPlus.Plants
                 return;
 
             Plugin.Logger.LogInfo(
-                "[Inferno Torchflower] Projectile Sun stored" +
+                "[Inferno Torchflower] Sun stored" +
                 " | This production = " + capturedThisCycle +
-                " | Reserve = " + storedProjectileSun
+                " | Reserve = " + storedSun
             );
         }
 
@@ -138,7 +219,8 @@ namespace PlantsPlus.Plants
                     0
                 );
 
-                naturalSunCreatedThisCycle = naturalSun != null;
+                naturalSunCreatedThisCycle =
+                    naturalSun != null || naturalSunCreatedThisCycle;
             }
 
             int converted = ConvertNearbyPlayerProjectiles(plant);
@@ -148,7 +230,7 @@ namespace PlantsPlus.Plants
                 " | Natural Sun = " +
                 (naturalSunCreatedThisCycle ? NaturalSunOutput : 0) +
                 " | Converted projectiles = " + converted +
-                " | Stored Sun = " + storedProjectileSun
+                " | Stored Sun = " + storedSun
             );
 
             return naturalSunCreatedThisCycle;
@@ -189,7 +271,7 @@ namespace PlantsPlus.Plants
                         continue;
 
                     bullet.Die();
-                    StoreProjectileSun();
+                    StoreSun(ProjectileSunValue);
                     converted++;
                 }
             }
@@ -219,7 +301,7 @@ namespace PlantsPlus.Plants
             Plugin.Logger.LogInfo(
                 "[Inferno Torchflower] Lit by native fire line" +
                 " | Energy " + before + " -> " + after +
-                " | Stored Sun = " + storedProjectileSun
+                " | Stored Sun = " + storedSun
             );
         }
 
@@ -309,7 +391,7 @@ namespace PlantsPlus.Plants
 
                 plant.bulletLayer = nativeMask.value != 0
                     ? nativeMask
-                    : LayerMask.GetMask("Bullet");
+                    : (LayerMask)LayerMask.GetMask("Bullet");
             }
 
             if (plant.plantLayer.value == 0)
@@ -320,7 +402,7 @@ namespace PlantsPlus.Plants
 
                 plant.plantLayer = nativeMask.value != 0
                     ? nativeMask
-                    : LayerMask.GetMask("Plant");
+                    : (LayerMask)LayerMask.GetMask("Plant");
             }
 
             if (plant.zombieLayer.value == 0)
@@ -331,7 +413,7 @@ namespace PlantsPlus.Plants
 
                 plant.zombieLayer = nativeMask.value != 0
                     ? nativeMask
-                    : LayerMask.GetMask("Zombie");
+                    : (LayerMask)LayerMask.GetMask("Zombie");
             }
         }
 
@@ -543,12 +625,21 @@ namespace PlantsPlus.Plants
 
             int energy = Mathf.Clamp(plant.attributeCount, 0, MaximumEnergy);
 
-            if (energy < MaximumEnergy)
+            if (energy <= 0)
             {
                 Plugin.Logger.LogInfo(
-                    "[Inferno Torchflower] Release not ready" +
+                    "[Inferno Torchflower] Release ignored: not lit" +
                     " | Energy = " + energy + "/" + MaximumEnergy +
-                    " | Stored Sun = " + storedProjectileSun
+                    " | Stored Sun = " + storedSun
+                );
+                return;
+            }
+
+            if (storedSun <= 0)
+            {
+                Plugin.Logger.LogInfo(
+                    "[Inferno Torchflower] Release ignored: reserve empty" +
+                    " | Energy = " + energy + "/" + MaximumEnergy
                 );
                 return;
             }
@@ -564,10 +655,38 @@ namespace PlantsPlus.Plants
                 return;
             }
 
-            int requestedDrops = storedProjectileSun / ProjectileSunValue;
-            int releasedDrops = 0;
+            float multiplier = energy / 100f;
+            double multipliedSun = storedSun * (double)multiplier;
+            int requestedSun = multipliedSun >= int.MaxValue
+                ? int.MaxValue
+                : Mathf.FloorToInt((float)multipliedSun);
 
-            for (int index = 0; index < requestedDrops; index++)
+            // PvZ Fusion's smallest physical Sun is worth 5. Keep the
+            // payout on that native grid instead of granting it invisibly.
+            int payableSun =
+                requestedSun - requestedSun % ProjectileSunValue;
+            if (payableSun <= 0)
+                return;
+
+            int normalDrops = payableSun / NaturalSunOutput;
+            int littleDrops =
+                (payableSun % NaturalSunOutput) / ProjectileSunValue;
+            int releasedSun = 0;
+
+            for (int index = 0; index < normalDrops; index++)
+            {
+                GameObject coin = creator.SetCoin(
+                    plant.thePlantColumn,
+                    plant.thePlantRow,
+                    (int)ItemType.NormalSun,
+                    0
+                );
+
+                if (coin != null)
+                    releasedSun += NaturalSunOutput;
+            }
+
+            for (int index = 0; index < littleDrops; index++)
             {
                 GameObject coin = creator.SetCoin(
                     plant.thePlantColumn,
@@ -577,19 +696,18 @@ namespace PlantsPlus.Plants
                 );
 
                 if (coin != null)
-                    releasedDrops++;
+                    releasedSun += ProjectileSunValue;
             }
 
-            int releasedSun = releasedDrops * ProjectileSunValue;
-            storedProjectileSun = Mathf.Max(0, storedProjectileSun - releasedSun);
+            storedSun = 0;
             plant.attributeCount = 0;
             UpdateEnergyText(plant);
 
             Plugin.Logger.LogInfo(
                 "[Inferno Torchflower] Stored Sun released" +
+                " | Multiplier = x" + multiplier.ToString("0.0") +
                 " | Released = " + releasedSun +
-                " | Remaining reserve = " + storedProjectileSun +
-                " | Energy = 0"
+                " | Reserve = 0 | Energy = 0"
             );
         }
 
@@ -624,15 +742,6 @@ namespace PlantsPlus.Plants
 
                 customData.PlantData = target;
                 CustomCore.CustomPlants[customType] = customData;
-
-                if (CustomCore.PlantsAlmanac.TryGetValue(
-                    customType,
-                    out PlantAlmanac almanac
-                ))
-                {
-                    almanac.cost = nativeData.cost.ToString();
-                    CustomCore.PlantsAlmanac[customType] = almanac;
-                }
 
                 if (!plantDataMirrorLogged)
                 {
@@ -679,6 +788,15 @@ namespace PlantsPlus.Plants
                     return;
 
                 EnsureRuntimeReferences(__instance);
+
+                int energy = Mathf.Clamp(
+                    __instance.attributeCount,
+                    0,
+                    MaximumEnergy
+                );
+                if (energy <= 0)
+                    return;
+
                 owner.BeginSunCapture();
                 activeSunCapture = owner;
             }
@@ -766,14 +884,15 @@ namespace PlantsPlus.Plants
 
                 if (theItemType == (int)ItemType.NormalSun)
                 {
-                    owner.ObserveNaturalSun();
-                    return true;
+                    owner.StoreNaturalSun();
+                    __result = null!;
+                    return false;
                 }
 
                 if (theItemType != (int)ItemType.LittleSun)
                     return true;
 
-                owner.StoreProjectileSun();
+                owner.StoreSun(ProjectileSunValue);
                 __result = null!;
                 return false;
             }
@@ -786,6 +905,7 @@ namespace PlantsPlus.Plants
             private static void Prefix(
                 BoardAction __instance,
                 int theFireRow,
+                PlantType fromType,
                 out List<InfernoTorchflower>? __state
             )
             {
@@ -793,6 +913,16 @@ namespace PlantsPlus.Plants
 
                 if (__instance == null || __instance.board == null)
                     return;
+
+                // Do not turn Witchfire/Pyro/Inferno-generated lines into a
+                // mutual charge loop. A real Jalapeno fire line remains a
+                // valid ignition and now grants 50 energy (5 to reach 250).
+                if ((int)fromType == WitchfirePumpkin.WitchfirePumpkinID ||
+                    (int)fromType == InfernoTorchflowerID ||
+                    fromType == PlantType.JalaPumpkin)
+                {
+                    return;
+                }
 
                 try
                 {

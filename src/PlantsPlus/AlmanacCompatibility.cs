@@ -25,6 +25,14 @@ namespace PlantsPlus.Core
             (PlantType)PlantsPlus.Plants.NuttySharpshooter.NuttySharpshooterID,
             (PlantType)PlantsPlus.Plants.InfernoTorchflower.InfernoTorchflowerID,
             (PlantType)PlantsPlus.Plants.PumpkinPodbomber.PumpkinPodbomberID,
+            (PlantType)PlantsPlus.Plants.NotAPea.NotAPeaID,
+            (PlantType)PlantsPlus.Plants.NotAStormCommando.NotAStormCommandoID,
+            (PlantType)PlantsPlus.Plants.FrostFurflower.FrostFurflowerID,
+            (PlantType)PlantsPlus.Plants.Doomtronion.DoomtronionID,
+            (PlantType)PlantsPlus.Plants.LichenPea.LichenPeaID,
+            (PlantType)PlantsPlus.Plants.LogicBlover.LogicBloverID,
+            (PlantType)PlantsPlus.Plants.SolarSharpshooter.SolarSharpshooterID,
+            (PlantType)PlantsPlus.Plants.SeaBallista.SeaBallistaID,
 #if ENABLE_MAGNETOPEA
             (PlantType)PlantsPlus.Plants.MagnetOPea.MagnetOPeaID,
 #endif
@@ -66,7 +74,12 @@ namespace PlantsPlus.Core
                     target.name = cleanName + " ";
                     target.info = source.info ?? string.Empty;
                     target.introduce = source.introduce ?? string.Empty;
-                    target.cost = source.cost ?? string.Empty;
+                    // Native PvZ Fusion plant entries do not append the seed
+                    // cost to the Almanac description. The card still keeps
+                    // its real gameplay cost in PlantData.
+                    source.cost = string.Empty;
+                    CustomCore.PlantsAlmanac[type] = source;
+                    target.cost = string.Empty;
                     target.seedType = (int)type;
                     refreshed++;
                 }

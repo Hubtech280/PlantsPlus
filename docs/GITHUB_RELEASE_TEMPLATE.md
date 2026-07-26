@@ -1,6 +1,6 @@
-# Plants+ v1.0.0
+# Plants+ v1.1.0
 
-The first public release of Plants+ is here, with ten custom plants for PvZ Fusion 3.8.
+Plants+ v1.1 doubles the roster to twenty custom plants and adds new editor and menu features for PvZ Fusion 3.8.
 
 ## Requirements
 
@@ -12,11 +12,20 @@ The first public release of Plants+ is here, with ten custom plants for PvZ Fusi
 
 1. Install the requirements.
 2. Remove every older `PlantsPlus.dll`.
-3. Extract this archive into the game folder, or copy `Mods/PlantsPlus.dll` into the game's `Mods` folder.
-4. Start the game and verify `Plants+ 1.0.0-release-ml.3 loaded!` in the log.
+3. Download `PlantsPlus-1.1.0-Release.zip`.
+4. Copy `PlantsPlus.dll` into the game's `Mods` folder.
+5. Start the game and verify `Plants+ 1.1.0-ml.3 loaded!` in the log.
 
-## Included plants
+## New plants
 
-Lotus Pumpkin, Bambnut, Magnet-o-pea, Iceberg-shroom, Witchfire Pumpkin, Nutty Sharpshooter, Inferno Torchflower, Pumpkin Podbomber, Ceasarweed and Solar Firnace.
+Not-a-pea, Not-a-storm Commando, Frost Furflower, Doomtronion, Lichen-pea, Logic Blover, Solar Sharpshooter, Sea Ballista, Pineshooter and Icytronion.
 
-See `CHANGELOG.md` in the repository for the complete release summary.
+## Other highlights
+
+- Inferno Torchflower rework.
+- Christmas Snow and themed Super Level Editor previews.
+- Electronion/Amp-nion Almanac, Carbon Copy, card and Sandbox integration.
+- Plants+ main-menu logo and dedicated changelog.
+- Extensive gameplay and visual fixes.
+
+See [`CHANGELOG.md`](../CHANGELOG.md) for the complete release notes.

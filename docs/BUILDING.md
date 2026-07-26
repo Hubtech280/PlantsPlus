@@ -46,7 +46,7 @@ dotnet build .\src\PlantsPlus\PlantsPlus.csproj -c Release
 The output is written to:
 
 ```text
-build/PlantsPlus.dll
+src/build/PlantsPlus.dll
 ```
 
 ## Explicit reference properties

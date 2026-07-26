@@ -235,7 +235,11 @@ namespace PlantsPlus.Plants
             )
             {
                 if (!IsNuttySharpshooter(__instance))
+                {
+                    if (!SolarSharpshooter.IsSolarPlant(__instance))
+                        return true;
                     return true;
+                }
 
                 try
                 {
@@ -255,6 +259,23 @@ namespace PlantsPlus.Plants
                 // this generic Bullet_pierce replacement.
                 return false;
             }
+
+            [HarmonyPostfix]
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(
+                SpruceShooter __instance,
+                Bullet __result
+            )
+            {
+                if (SolarSharpshooter.IsSolarPlant(__instance) &&
+                    __result != null)
+                {
+                    SolarSharpshooter.ConfigureNativeShot(
+                        __instance,
+                        __result
+                    );
+                }
+            }
         }
 
         [HarmonyPatch(typeof(Bullet_pierce), nameof(Bullet_pierce.InitData))]
@@ -265,7 +286,15 @@ namespace PlantsPlus.Plants
             private static void Postfix(Bullet_pierce __instance)
             {
                 if (IsNuttyBullet(__instance))
+                {
                     ConfigurePiercing(__instance);
+                    return;
+                }
+
+                // Not-a-pea beta.9 no longer carries Bullet_pierce at all.
+                // This postfix now belongs exclusively to Nutty Sharpshooter;
+                // there must be no compatibility bridge back to the removed
+                // Not-a-pea Bullet_pierce runtime.
             }
         }
 
@@ -308,6 +337,35 @@ namespace PlantsPlus.Plants
                         exception.Message
                     );
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(Bullet_pierce), "OnTriggerEnter2D")]
+        private static class SolarPierce_Trigger_Patch
+        {
+            [HarmonyPrefix]
+            [HarmonyPriority(Priority.First)]
+            private static void Prefix(
+                Bullet_pierce __instance,
+                out int __state
+            )
+            {
+                __state = __instance != null ? __instance.hitTimes : 0;
+            }
+
+            [HarmonyPostfix]
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(
+                Bullet_pierce __instance,
+                int __state
+            )
+            {
+                if (!SolarSharpshooter.IsSolarBullet(__instance))
+                    return;
+
+                int newHits = __instance.hitTimes - __state;
+                if (newHits > 0)
+                    SolarSharpshooter.DropSun(__instance, newHits);
             }
         }
     }

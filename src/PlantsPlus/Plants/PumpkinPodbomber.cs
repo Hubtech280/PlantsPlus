@@ -21,6 +21,7 @@ namespace PlantsPlus.Plants
         public const int FallbackCardCost = 350;
         public const float FallbackCardRecharge = 30f;
         public const float FallbackAttackInterval = 3f;
+        public const float CherrySynergyAttackInterval = 3f;
         public const int FallbackExplodeDamage = 300;
         public const int ExplosiveVolleyFrequency = 4;
 
@@ -39,6 +40,7 @@ namespace PlantsPlus.Plants
         private PlantType trackedInnerType = (PlantType)(-1);
         private int volleyCount;
         private bool explosiveVolley;
+        private bool cherrySynergyActive;
 
         public PumpkinPodbomber(IntPtr ptr) : base(ptr) { }
 
@@ -66,9 +68,35 @@ namespace PlantsPlus.Plants
                 " | Explosive volley = every " +
                 ExplosiveVolleyFrequency + " shots" +
                 " | Cherry Shooter = every shot explosive" +
-                " | Cherry cadence = native Pumpkin Pod 50% rate" +
+                " | Cherry cadence = " +
+                CherrySynergyAttackInterval + "s" +
                 " | Shovel = Explode-o-shooter card"
             );
+        }
+
+        public void Update()
+        {
+            PeaPumpkin? shell = NativePlant;
+
+            if (shell == null || shell.dying)
+                return;
+
+            Plant? inner = FindProtectedPeaPlant(shell);
+            bool nowCherry =
+                inner != null && inner.thePlantType == PlantType.Cherryshooter;
+
+            if (cherrySynergyActive && !nowCherry)
+            {
+                // Drop the custom delay immediately. The next native attack
+                // recalculates Pumpkin Pod's normal copied cadence.
+                shell.thePlantAttackCountDown = 0f;
+                Plugin.Logger.LogInfo(
+                    "[Pumpkin Podbomber] Cherry synergy removed" +
+                    " | Native cadence restored"
+                );
+            }
+
+            cherrySynergyActive = nowCherry;
         }
 
         private static bool IsPumpkinPodbomber(Plant? plant)
@@ -229,6 +257,19 @@ namespace PlantsPlus.Plants
             if (activeVolley == this)
                 activeVolley = null;
 
+            PeaPumpkin? shell = NativePlant;
+
+            if (trackedInnerType == PlantType.Cherryshooter &&
+                shell != null &&
+                !shell.dying)
+            {
+                // Apply the requested 3-second cadence only to the Cherry
+                // synergy, after native AnimShoot has scheduled its next shot.
+                shell.thePlantAttackCountDown =
+                    CherrySynergyAttackInterval;
+                cherrySynergyActive = true;
+            }
+
             if (!explosiveVolley || explosiveBullets.Count == 0)
                 return;
 
@@ -340,7 +381,7 @@ namespace PlantsPlus.Plants
                     : default;
                 plant.bulletLayer = nativeMask.value != 0
                     ? nativeMask
-                    : LayerMask.GetMask("Bullet");
+                    : (LayerMask)LayerMask.GetMask("Bullet");
             }
 
             if (plant.plantLayer.value == 0)
@@ -350,7 +391,7 @@ namespace PlantsPlus.Plants
                     : default;
                 plant.plantLayer = nativeMask.value != 0
                     ? nativeMask
-                    : LayerMask.GetMask("Plant");
+                    : (LayerMask)LayerMask.GetMask("Plant");
             }
 
             if (plant.zombieLayer.value == 0)
@@ -360,7 +401,7 @@ namespace PlantsPlus.Plants
                     : default;
                 plant.zombieLayer = nativeMask.value != 0
                     ? nativeMask
-                    : LayerMask.GetMask("Zombie");
+                    : (LayerMask)LayerMask.GetMask("Zombie");
             }
         }
 
@@ -544,15 +585,6 @@ namespace PlantsPlus.Plants
 
                 customData.PlantData = target;
                 CustomCore.CustomPlants[customType] = customData;
-
-                if (CustomCore.PlantsAlmanac.TryGetValue(
-                    customType,
-                    out PlantAlmanac almanac
-                ))
-                {
-                    almanac.cost = nativeData.cost.ToString();
-                    CustomCore.PlantsAlmanac[customType] = almanac;
-                }
 
                 if (!plantDataMirrorLogged)
                 {

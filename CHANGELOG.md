@@ -1,5 +1,48 @@
 # Changelog
 
+## [1.1.0] - 2026-07-26
+
+Second public Plants+ release for PvZ Fusion 3.8 and MelonLoader 0.7.3.
+
+### Added
+
+- Ten new custom plants with IDs 6010-6019:
+  - Not-a-pea
+  - Not-a-storm Commando
+  - Frost Furflower
+  - Doomtronion
+  - Lichen-pea
+  - Logic Blover
+  - Solar Sharpshooter
+  - Sea Ballista
+  - Pineshooter
+  - Icytronion
+- Custom projectiles, visual effects, Almanac entries and recipes for the new plants.
+- Logic Blover as a Harvest-exclusive Red Card with Gift Box luck and Gold Bean reactivation.
+- Christmas Snow in the Super Level Editor.
+- Themed map backgrounds and matching plant previews for every editor scene.
+- Plants+ v1.1 logo and a dedicated in-game Plants+ changelog on the main menu.
+- Night Roof card presentation for Electronion/Amp-nion.
+
+### Changed
+
+- Reworked Inferno Torchflower. Lit projectiles now charge up to 250 energy; clicking releases the stored Sun with a multiplier based on the charge and resets every related counter.
+- Electronion/Amp-nion now behaves as a regular selectable plant where allowed, supports Carbon Copy, appears in the correct Almanac position and has a dedicated Sandbox slot.
+- Christmas Snow now uses the Snowy Night music.
+- Logic Blover now has its complete intended Harvest mechanics and card classification.
+- Reworked and cleaned custom Almanac copy to match PVZ Fusion's native presentation.
+
+### Fixed and polished
+
+- Doomtronion and Icytronion preserve Irradiation, slow and freeze effects while connected to their electric family.
+- Doomtronion's `biu` beam, impact position, attack timing and target chaining.
+- Solar Firnace cold protection.
+- Solar Sharpshooter piercing, Sun drops and projectile position.
+- Sea Ballista range and projectile height.
+- Pineshooter knockback/collision mechanics, projectile height, preview scale, pooled projectile cleanup and shadow.
+- Electronion card backgrounds, restricted-level availability, Carbon Copy, Almanac and page placement.
+- Multiple custom plant animations, previews, shadows, cards and effect synchronization issues.
+
 ## [1.0.0] - 2026-07-17
 
 First public release of Plants+ for PvZ Fusion 3.8 and MelonLoader 0.7.3.

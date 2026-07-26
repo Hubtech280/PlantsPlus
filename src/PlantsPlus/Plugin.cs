@@ -15,8 +15,11 @@ namespace PlantsPlus
         {
             Logger = base.Logger;
 
-            Logger.LogInfo("Plants+ 1.0.0-release-ml.3 loaded!");
+            Logger.LogInfo("Plants+ 1.1.0-ml.3 loaded!");
 
+            NightRoofCards.OnStart();
+            SuperLevelEditorPlus.OnStart();
+            MainMenuBranding.OnStart();
             RegisterIl2CppTypes();
             bool registered = PlantRegister.RegisterPlants();
 
@@ -24,7 +27,7 @@ namespace PlantsPlus
             {
 #if ENABLE_MAGNETOPEA
                 Logger.LogInfo(
-                    "Plants+ V1.0 registration finished " +
+                    "Plants+ beta registration finished " +
                     "(safe IDs; Pumpkin Podbomber, Inferno Torchflower, " +
                     "Nutty Sharpshooter, " +
                     "Witchfire Pumpkin, Iceberg-shroom and Magnet-o-pea " +
@@ -32,7 +35,7 @@ namespace PlantsPlus
                 );
 #else
                 Logger.LogInfo(
-                    "Plants+ V1.0 registration finished " +
+                    "Plants+ beta registration finished " +
                     "(safe IDs; Pumpkin Podbomber, Inferno Torchflower, " +
                     "Nutty Sharpshooter, " +
                     "Witchfire Pumpkin and Iceberg-shroom enabled; " +
@@ -43,12 +46,19 @@ namespace PlantsPlus
             else
             {
                 Logger.LogError(
-                    "Plants+ V1.0 registration failed safely; " +
+                    "Plants+ beta registration failed safely; " +
                     "no custom plant was added."
                 );
             }
 
             FinalPlantsBootstrap.OnStart();
+            V11PlantsBootstrap.OnStart();
+            V11ExpansionBootstrap.OnStart();
+            LogicBloverBootstrap.OnStart();
+            SolarSharpshooterBootstrap.OnStart();
+            SeaBallistaBootstrap.OnStart();
+            PineshooterBootstrap.OnStart();
+            IcytronionBootstrap.OnStart();
         }
 
         public override void OnGameInit()
@@ -61,6 +71,13 @@ namespace PlantsPlus
             // statistics after PVZ Fusion has initialized PlantDataManager.
             InfernoTorchflower.RefreshNativePlantData();
             PumpkinPodbomber.RefreshNativePlantData();
+            V11PlantsBootstrap.OnGameInit();
+            V11ExpansionBootstrap.OnGameInit();
+            LogicBloverBootstrap.OnGameInit();
+            SolarSharpshooterBootstrap.OnGameInit();
+            SeaBallistaBootstrap.OnGameInit();
+            PineshooterBootstrap.OnGameInit();
+            IcytronionBootstrap.OnGameInit();
 
             // CustomizeLib 3.8 currently leaves the separate lore field out
             // when it copies custom entries into the native Almanac data.
@@ -96,6 +113,40 @@ namespace PlantsPlus
 
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SolarFirnace>())
                 ClassInjector.RegisterTypeInIl2Cpp<SolarFirnace>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<NotAPea>())
+                ClassInjector.RegisterTypeInIl2Cpp<NotAPea>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<NotAStormCommando>())
+                ClassInjector.RegisterTypeInIl2Cpp<NotAStormCommando>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<NotAPeaProjectile>())
+                ClassInjector.RegisterTypeInIl2Cpp<NotAPeaProjectile>();
+
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<FrostFurflower>())
+                ClassInjector.RegisterTypeInIl2Cpp<FrostFurflower>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<Doomtronion>())
+                ClassInjector.RegisterTypeInIl2Cpp<Doomtronion>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<LichenPea>())
+                ClassInjector.RegisterTypeInIl2Cpp<LichenPea>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<LogicBlover>())
+                ClassInjector.RegisterTypeInIl2Cpp<LogicBlover>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SolarSharpshooter>())
+                ClassInjector.RegisterTypeInIl2Cpp<SolarSharpshooter>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SeaBallista>())
+                ClassInjector.RegisterTypeInIl2Cpp<SeaBallista>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<Pineshooter>())
+                ClassInjector.RegisterTypeInIl2Cpp<Pineshooter>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<Icytronion>())
+                ClassInjector.RegisterTypeInIl2Cpp<Icytronion>();
 
 #if ENABLE_MAGNETOPEA
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<MagnetOPea>())

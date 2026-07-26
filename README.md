@@ -1,8 +1,10 @@
 # Plants+
 
-**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8**. Version **1.0.0** adds ten custom plants with original mechanics, Almanac entries, fusion/conversion recipes, custom prefabs and Odyssey support.
+**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8**. Version **1.1.0** contains twenty custom plants, original mechanics, Almanac entries, fusion and conversion recipes, custom prefabs, Odyssey support, editor improvements and new menu presentation.
 
-> MelonLoader build string: `1.0.0-release-ml.3`
+> MelonLoader build string: `1.1.0-ml.3`
+
+![Plants+ v1.1 logo](src/PlantsPlus/Resources/Sprites/plants_v1_1_logo.png)
 
 ## Requirements
 
@@ -14,18 +16,37 @@
 
 | ID | Plant | Type | Recipe / creation |
 |---:|---|---|---|
-| 6000 | Lotus Pumpkin | Cross Adventure Fusion | Pumpkin + Snow Lotus |
-| 6001 | Bambnut | Cross Adventure Fusion | Bamblock + Wall-nut |
-| 6002 | Magnet-o-pea | Cross Fusion | Peashooter + Magnet-shroom |
-| 6003 | Iceberg-shroom | Double Fusion | Ice-shroom + Ice-shroom |
+| 6000 | Lotus Pumpkin | Basic Cross Fusion | Pumpkin + Snow Lotus |
+| 6001 | Bambnut | Basic Cross Fusion | Bamblock + Wall-nut |
+| 6002 | Magnet-o-pea | Basic Cross Fusion | Peashooter + Magnet-shroom |
+| 6003 | Iceberg-shroom | Basic Double Fusion | Ice-shroom + Ice-shroom |
 | 6004 | Witchfire Pumpkin | Weak Odyssey | Pyro Pumpkin + Doom Pumpkin |
-| 6005 | Nutty Sharpshooter | Cross Adventure Fusion | Spruce Sharpshooter + Wall-nut |
+| 6005 | Nutty Sharpshooter | Basic Cross Fusion | Spruce Sharpshooter + Wall-nut |
 | 6006 | Inferno Torchflower | Advanced Alt | Infernowood + Sunflower |
 | 6007 | Pumpkin Podbomber | Advanced Alt | Explode-o-shooter + Pumpkin |
 | 6008 | Ceasarweed | Advanced Alt | Salad-pult + Spikeweed |
-| 6009 | Solar Firnace | Cross Adventure Fusion | Firnace absorbs the Sunflower below it |
+| 6009 | Solar Firnace | Special Cross Fusion | Firnace absorbs the Sunflower below it |
+| 6010 | Not-a-pea | Basic Fusion | Saw-me-not > Peashooter |
+| 6011 | Not-a-storm Commando | Strong Odyssey | Saw-me-not > Pea-storm Commando |
+| 6012 | Frost Furflower | Advanced Fusion | Hoarfrost Lichen > Sunflower |
+| 6013 | Doomtronion | Electric Fusion | Amp-nion > Doom-shroom |
+| 6014 | Lichen-pea | Basic Fusion | Hoarfrost Lichen > Peashooter |
+| 6015 | Logic Blover | Harvest Red Card | Harvest-exclusive; no fusion recipe |
+| 6016 | Solar Sharpshooter | Basic Fusion | Spruce Sharpshooter > Sunflower |
+| 6017 | Sea Ballista | Aquatic Fusion | Spruce Ballista > Sea-shroom |
+| 6018 | Pineshooter | Basic Fusion | Peashooter > Spruce Sharpshooter |
+| 6019 | Icytronion | Electric Fusion | Amp-nion > Ice-shroom |
 
 All custom plant IDs use the 6000 range to avoid PVZ Fusion 3.8's occupied native range.
+
+## Highlights in v1.1
+
+- Ten new plants, from Not-a-pea through Icytronion.
+- A redesigned Inferno Torchflower with click-to-release stored Sun.
+- Correct Electronion/Amp-nion Almanac, Carbon Copy, card and Sandbox integration.
+- The Christmas Snow scene and themed previews in the Super Level Editor.
+- A Plants+ main-menu logo and dedicated in-game changelog.
+- Extensive fixes for electric chains, projectiles, animations, shadows, cards and cold protection.
 
 ## Installation
 
@@ -33,7 +54,7 @@ All custom plant IDs use the 6000 range to avoid PVZ Fusion 3.8's occupied nativ
 2. Put the MelonLoader port of `CustomizeLib.BepInEx.dll` in the game's `Mods` folder.
 3. Remove older copies of `PlantsPlus.dll`.
 4. Put `PlantsPlus.dll` from the GitHub release in the game's `Mods` folder.
-5. Start the game and look for `Plants+ 1.0.0-release-ml.3 loaded!` in the MelonLoader log.
+5. Start the game and look for `Plants+ 1.1.0-ml.3 loaded!` in the MelonLoader log.
 
 ## Documentation
 
@@ -53,7 +74,8 @@ Open an issue using the bug-report template and attach the complete MelonLoader 
 ## Credits
 
 - Mod creator and plant concepts: **Auro**
-- Sprites credit: **Red Reel**
+- Plant and fusion artwork: **Red Reel** and **Retrosphere**
+- Preview video editing: **Mathys**
 - Built for the PvZ Fusion modding community using the MelonLoader port of CustomizeLib
 
 ## Disclaimer
