@@ -75,7 +75,6 @@ Ouvre une issue avec le modèle de rapport de bug et joins le log MelonLoader co
 
 - Créateur du mod et concepts des plantes : **Auro**
 - Dessins des plantes et fusions : **Red Reel** et **Retrosphere**
-- Montage des vidéos de présentation : **Mathys**
 - Créé pour la communauté de modding PvZ Fusion avec le port MelonLoader de CustomizeLib
 
 ## Avertissement
