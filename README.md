@@ -75,7 +75,6 @@ Open an issue using the bug-report template and attach the complete MelonLoader 
 
 - Mod creator and plant concepts: **Auro**
 - Plant and fusion artwork: **Red Reel** and **Retrosphere**
-- Preview video editing: **Mathys**
 - Built for the PvZ Fusion modding community using the MelonLoader port of CustomizeLib
 
 ## Disclaimer
