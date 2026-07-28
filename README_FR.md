@@ -1,16 +1,16 @@
 # Plants+
 
-**Plants+** est un mod de contenu pour **Plants vs. Zombies Fusion 3.8**. La version **1.1.0** contient vingt plantes personnalisées, leurs mécaniques originales, fiches d'Almanach, recettes de fusion et de conversion, prefabs, compatibilité Odyssey, améliorations de l'éditeur et nouveaux éléments de menu.
+**Plants+** est un mod de contenu pour **Plants vs. Zombies Fusion 3.8.1**. La version **1.1.1** contient vingt plantes personnalisées, leurs mécaniques originales, fiches d'Almanach, recettes de fusion et de conversion, prefabs, compatibilité Odyssey, améliorations de l'éditeur et nouveaux éléments de menu.
 
-> Version interne MelonLoader : `1.1.0-ml.3`
+> Version interne MelonLoader : `1.1.1-ml.13`
 
 ![Logo Plants+ v1.1](src/PlantsPlus/Resources/Sprites/plants_v1_1_logo.png)
 
 ## Prérequis
 
-- Plants vs. Zombies Fusion **3.8**
+- Plants vs. Zombies Fusion **3.8.1**
 - MelonLoader **0.7.3**
-- Le port MelonLoader de **CustomizeLib 3.8** (`CustomizeLib.BepInEx.dll`)
+- **CustomizeLib.MelonLoader 3.8.1-ml.1** (`CustomizeLib.MelonLoader.dll`)
 
 ## Plantes incluses
 
@@ -50,11 +50,11 @@ Tous les IDs personnalisés utilisent la plage 6000 afin d'éviter la plage nati
 
 ## Installation
 
-1. Installe MelonLoader 0.7.3 pour PVZ Fusion 3.8.
-2. Place le port MelonLoader de `CustomizeLib.BepInEx.dll` dans le dossier `Mods` du jeu.
+1. Installe MelonLoader 0.7.3 pour PVZ Fusion 3.8.1.
+2. Place `CustomizeLib.MelonLoader.dll` dans le dossier `Mods` du jeu.
 3. Supprime les anciennes copies de `PlantsPlus.dll`.
 4. Place le `PlantsPlus.dll` de la release GitHub dans le dossier `Mods`.
-5. Lance le jeu et vérifie la présence de `Plants+ 1.1.0-ml.3 loaded!` dans le log MelonLoader.
+5. Lance le jeu et vérifie la présence de `Plants+ 1.1.1-ml.13 loaded!` dans le log MelonLoader.
 
 ## Documentation
 
@@ -75,6 +75,7 @@ Ouvre une issue avec le modèle de rapport de bug et joins le log MelonLoader co
 
 - Créateur du mod et concepts des plantes : **Auro**
 - Dessins des plantes et fusions : **Red Reel** et **Retrosphere**
+- Montage des vidéos de présentation : **Mathys**
 - Créé pour la communauté de modding PvZ Fusion avec le port MelonLoader de CustomizeLib
 
 ## Avertissement

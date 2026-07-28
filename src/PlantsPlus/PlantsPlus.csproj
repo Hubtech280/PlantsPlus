@@ -12,9 +12,9 @@
     <DebugSymbols>false</DebugSymbols>
     <DebugType>None</DebugType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.102</AssemblyVersion>
-    <FileVersion>1.1.0.102</FileVersion>
+    <Version>1.1.1</Version>
+    <AssemblyVersion>1.1.1.13</AssemblyVersion>
+    <FileVersion>1.1.1.13</FileVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>../build/</OutputPath>
@@ -25,7 +25,7 @@
     <ReferenceRoot Condition="'$(ReferenceRoot)' == '' and '$(PVZF_GAME_DIR)' != ''">$(PVZF_GAME_DIR)/MelonLoader</ReferenceRoot>
     <MelonLoaderRefs>$(ReferenceRoot)/net6</MelonLoaderRefs>
     <Il2CppRefs>$(ReferenceRoot)/Il2CppAssemblies</Il2CppRefs>
-    <CustomizeLibPath Condition="'$(CustomizeLibPath)' == '' and '$(PVZF_GAME_DIR)' != ''">$(PVZF_GAME_DIR)/Mods/CustomizeLib.BepInEx.dll</CustomizeLibPath>
+    <CustomizeLibPath Condition="'$(CustomizeLibPath)' == '' and '$(PVZF_GAME_DIR)' != ''">$(PVZF_GAME_DIR)/Mods/CustomizeLib.MelonLoader.dll</CustomizeLibPath>
     <DefineConstants Condition="'$(EnableMagnetOPea)' == 'true'">$(DefineConstants);ENABLE_MAGNETOPEA</DefineConstants>
   </PropertyGroup>
 
@@ -104,7 +104,7 @@
     <Reference Include="Il2CppInterop.Runtime" HintPath="$(MelonLoaderRefs)/Il2CppInterop.Runtime.dll" Private="false" />
     <Reference Include="System.Runtime.CompilerServices.Unsafe" HintPath="$(MelonLoaderRefs)/System.Runtime.CompilerServices.Unsafe.dll" Private="false" />
 
-    <Reference Include="CustomizeLib.BepInEx" HintPath="$(CustomizeLibPath)" Private="false" />
+    <Reference Include="CustomizeLib.MelonLoader" HintPath="$(CustomizeLibPath)" Private="false" />
     <Reference Include="Assembly-CSharp" HintPath="$(Il2CppRefs)/Assembly-CSharp.dll" Private="false" />
     <Reference Include="Il2Cppmscorlib" HintPath="$(Il2CppRefs)/Il2Cppmscorlib.dll" Private="false" />
     <Reference Include="Il2CppSystem" HintPath="$(Il2CppRefs)/Il2CppSystem.dll" Private="false" />
@@ -125,6 +125,6 @@
     <Error Condition="!Exists('$(Il2CppRefs)/Assembly-CSharp.dll')"
            Text="Assembly-CSharp.dll not found. Generate/install the game's MelonLoader Il2CppAssemblies first." />
     <Error Condition="!Exists('$(CustomizeLibPath)')"
-           Text="CustomizeLib.BepInEx.dll not found. Set CustomizeLibPath or place the MelonLoader port in the game's Mods folder." />
+           Text="CustomizeLib.MelonLoader.dll not found. Set CustomizeLibPath or place the MelonLoader port in the game's Mods folder." />
   </Target>
 </Project>

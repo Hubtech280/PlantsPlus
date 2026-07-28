@@ -3,9 +3,9 @@
 ## Prérequis
 
 - SDK .NET 6
-- Plants vs. Zombies Fusion 3.8 avec MelonLoader 0.7.3
+- Plants vs. Zombies Fusion 3.8.1 avec MelonLoader 0.7.3
 - Assemblies IL2CPP générées par MelonLoader
-- `CustomizeLib.BepInEx.dll` provenant du port MelonLoader de CustomizeLib
+- `CustomizeLib.MelonLoader.dll` 3.8.1-ml.1
 
 ## Structure attendue
 
@@ -24,7 +24,7 @@ Le projet trouve automatiquement les références lorsque `PVZF_GAME_DIR` pointe
 │     ├─ Il2CppSystem.dll
 │     └─ UnityEngine.*.dll
 └─ Mods/
-   └─ CustomizeLib.BepInEx.dll
+   └─ CustomizeLib.MelonLoader.dll
 ```
 
 ## Commande de compilation

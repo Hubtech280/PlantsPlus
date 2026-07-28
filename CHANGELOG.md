@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1] - 2026-07-28
+
+Compatibility and quality hotfix for PvZ Fusion 3.8.1 and CustomizeLib.MelonLoader 3.8.1-ml.1.
+
+### Fixed
+
+- Updated Plants+ to the real `CustomizeLib.MelonLoader` assembly and namespace used by PvZ Fusion 3.8.1.
+- Fixed Electronion's locked card in restricted challenge levels, including The Gods: Evolved.
+- Kept Electronion on the second normal-card page without the Peashooter packet, missing preview or duplicate template card.
+- Preserved the normal Adventure card and Carbon Copy behavior.
+- Preserved the animated Plants+ main-menu logo on the updated game build.
+
 ## [1.1.0] - 2026-07-26
 
 Second public Plants+ release for PvZ Fusion 3.8 and MelonLoader 0.7.3.

@@ -1,5 +1,5 @@
 using BepInEx.Logging;
-using CustomizeLib.BepInEx;
+using CustomizeLib.MelonLoader;
 using Il2CppInterop.Runtime.Injection;
 using PlantsPlus.Core;
 using PlantsPlus.Plants;
@@ -15,7 +15,7 @@ namespace PlantsPlus
         {
             Logger = base.Logger;
 
-            Logger.LogInfo("Plants+ 1.1.0-ml.3 loaded!");
+            Logger.LogInfo("Plants+ 1.1.1-ml.13 loaded!");
 
             NightRoofCards.OnStart();
             SuperLevelEditorPlus.OnStart();

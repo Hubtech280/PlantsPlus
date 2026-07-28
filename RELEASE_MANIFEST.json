@@ -1,10 +1,10 @@
 {
-  "release": "Plants+ v1.1.0",
-  "melonloader_build_string": "1.1.0-ml.3",
-  "target_game": "Plants vs. Zombies Fusion 3.8",
+  "release": "Plants+ v1.1.1",
+  "melonloader_build_string": "1.1.1-ml.13",
+  "target_game": "Plants vs. Zombies Fusion 3.8.1",
   "target_loader": "MelonLoader 0.7.3",
-  "binary_size": 68065280,
-  "binary_sha256": "dd72c4bdb6bbaafbd34cd77b010159cd6645796a6a93ba05b2bad763654a5cd0",
-  "source_status": "GitHub source package prepared from the final v1.1.0 codebase.",
+  "binary_size": 68071424,
+  "binary_sha256": "f682ba440ca021f8b17fcb29a21caef3646f30caa5c6d12a5bcf450d020e3745",
+  "source_status": "GitHub source synchronized with the tested Plants+ v1.1.1-ml.13 codebase.",
   "binary_status": "Release binary rebuilt with synchronized assembly, MelonLoader and in-game version metadata."
 }

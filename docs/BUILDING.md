@@ -3,9 +3,9 @@
 ## Requirements
 
 - .NET 6 SDK
-- Plants vs. Zombies Fusion 3.8 with MelonLoader 0.7.3 installed
+- Plants vs. Zombies Fusion 3.8.1 with MelonLoader 0.7.3 installed
 - MelonLoader-generated IL2CPP assemblies
-- `CustomizeLib.BepInEx.dll` from the CustomizeLib MelonLoader port
+- `CustomizeLib.MelonLoader.dll` 3.8.1-ml.1
 
 ## Expected game layout
 
@@ -24,7 +24,7 @@ The project can resolve references automatically when `PVZF_GAME_DIR` points to 
 │     ├─ Il2CppSystem.dll
 │     └─ UnityEngine.*.dll
 └─ Mods/
-   └─ CustomizeLib.BepInEx.dll
+   └─ CustomizeLib.MelonLoader.dll
 ```
 
 ## Build command
@@ -56,7 +56,7 @@ Instead of `PVZF_GAME_DIR`, the paths can be supplied directly:
 ```powershell
 dotnet build .\src\PlantsPlus\PlantsPlus.csproj -c Release `
   -p:ReferenceRoot="C:\Path\To\PVZ Fusion\MelonLoader" `
-  -p:CustomizeLibPath="C:\Path\To\PVZ Fusion\Mods\CustomizeLib.BepInEx.dll"
+  -p:CustomizeLibPath="C:\Path\To\PVZ Fusion\Mods\CustomizeLib.MelonLoader.dll"
 ```
 
 ## Optional fallback build

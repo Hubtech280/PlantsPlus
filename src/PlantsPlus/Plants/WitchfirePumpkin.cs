@@ -1,6 +1,6 @@
 using HarmonyLib;
 using Il2Cpp;
-using CustomizeLib.BepInEx;
+using CustomizeLib.MelonLoader;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

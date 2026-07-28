@@ -53,6 +53,11 @@ namespace PlantsPlus.Core
 
         private static Sprite? logoSprite;
         private static bool changelogPending;
+        private static RectTransform? animatedLogo;
+        private static Image? animatedLogoImage;
+        private static float logoAnimationStart;
+        private static Vector2 logoTargetPosition;
+        private static bool logoAnimationRunning;
 
         internal static void OnStart()
         {
@@ -93,7 +98,10 @@ namespace PlantsPlus.Core
         {
             Transform existing = menu.transform.Find(LogoObjectName);
             if (existing != null)
+            {
+                BeginLogoAnimation(existing as RectTransform);
                 return;
+            }
 
             Sprite? sprite = LoadLogoSprite();
             if (sprite == null)
@@ -127,6 +135,101 @@ namespace PlantsPlus.Core
             // Render above the menu background while keeping the existing
             // interactive grave and buttons untouched.
             rect.SetAsLastSibling();
+            BeginLogoAnimation(rect);
+        }
+
+        private static void BeginLogoAnimation(
+            RectTransform? rect
+        )
+        {
+            if (rect == null)
+                return;
+
+            Image image = rect.GetComponent<Image>();
+            if (image == null)
+                return;
+
+            logoTargetPosition = new Vector2(-205f, -100f);
+            rect.anchoredPosition =
+                logoTargetPosition + new Vector2(0f, -18f);
+            rect.localScale = Vector3.one * 0.82f;
+
+            Color color = image.color;
+            color.a = 0f;
+            image.color = color;
+
+            animatedLogo = rect;
+            animatedLogoImage = image;
+            logoAnimationStart = Time.unscaledTime;
+            logoAnimationRunning = true;
+            rect.gameObject.SetActive(true);
+        }
+
+        internal static void AnimateLogo(MainMenu menu)
+        {
+            if (!logoAnimationRunning ||
+                menu == null ||
+                animatedLogo == null ||
+                animatedLogoImage == null)
+            {
+                return;
+            }
+
+            Transform current = animatedLogo;
+            bool belongsToMenu = false;
+
+            while (current != null)
+            {
+                if (current == menu.transform)
+                {
+                    belongsToMenu = true;
+                    break;
+                }
+
+                current = current.parent;
+            }
+
+            if (!belongsToMenu)
+            {
+                logoAnimationRunning = false;
+                return;
+            }
+
+            const float delay = 0.25f;
+            const float duration = 0.55f;
+            float raw =
+                (Time.unscaledTime - logoAnimationStart - delay) /
+                duration;
+
+            if (raw <= 0f)
+                return;
+
+            float t = Mathf.Clamp01(raw);
+            float eased = 1f - Mathf.Pow(1f - t, 3f);
+
+            animatedLogo.anchoredPosition = Vector2.Lerp(
+                logoTargetPosition + new Vector2(0f, -18f),
+                logoTargetPosition,
+                eased
+            );
+            animatedLogo.localScale = Vector3.one * Mathf.Lerp(
+                0.82f,
+                1f,
+                eased
+            );
+
+            Color color = animatedLogoImage.color;
+            color.a = eased;
+            animatedLogoImage.color = color;
+
+            if (t >= 1f)
+            {
+                animatedLogo.anchoredPosition = logoTargetPosition;
+                animatedLogo.localScale = Vector3.one;
+                color.a = 1f;
+                animatedLogoImage.color = color;
+                logoAnimationRunning = false;
+            }
         }
 
         private static void EnsureChangelogButton(BaseMenu menu)
@@ -322,4 +425,16 @@ namespace PlantsPlus.Core
             MainMenuBranding.ApplyPendingChangelog(__instance);
         }
     }
+
+    [HarmonyPatch(typeof(MainMenu), "Update")]
+    internal static class PlantsPlusMainMenuUpdatePatch
+    {
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(MainMenu __instance)
+        {
+            MainMenuBranding.AnimateLogo(__instance);
+        }
+    }
+
 }

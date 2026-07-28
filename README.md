@@ -1,16 +1,16 @@
 # Plants+
 
-**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8**. Version **1.1.0** contains twenty custom plants, original mechanics, Almanac entries, fusion and conversion recipes, custom prefabs, Odyssey support, editor improvements and new menu presentation.
+**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8.1**. Version **1.1.1** contains twenty custom plants, original mechanics, Almanac entries, fusion and conversion recipes, custom prefabs, Odyssey support, editor improvements and new menu presentation.
 
-> MelonLoader build string: `1.1.0-ml.3`
+> MelonLoader build string: `1.1.1-ml.13`
 
 ![Plants+ v1.1 logo](src/PlantsPlus/Resources/Sprites/plants_v1_1_logo.png)
 
 ## Requirements
 
-- Plants vs. Zombies Fusion **3.8**
+- Plants vs. Zombies Fusion **3.8.1**
 - MelonLoader **0.7.3**
-- The MelonLoader port of **CustomizeLib 3.8** (`CustomizeLib.BepInEx.dll`)
+- **CustomizeLib.MelonLoader 3.8.1-ml.1** (`CustomizeLib.MelonLoader.dll`)
 
 ## Plants included
 
@@ -50,11 +50,11 @@ All custom plant IDs use the 6000 range to avoid PVZ Fusion 3.8's occupied nativ
 
 ## Installation
 
-1. Install MelonLoader 0.7.3 for PVZ Fusion 3.8.
-2. Put the MelonLoader port of `CustomizeLib.BepInEx.dll` in the game's `Mods` folder.
+1. Install MelonLoader 0.7.3 for PVZ Fusion 3.8.1.
+2. Put `CustomizeLib.MelonLoader.dll` in the game's `Mods` folder.
 3. Remove older copies of `PlantsPlus.dll`.
 4. Put `PlantsPlus.dll` from the GitHub release in the game's `Mods` folder.
-5. Start the game and look for `Plants+ 1.1.0-ml.3 loaded!` in the MelonLoader log.
+5. Start the game and look for `Plants+ 1.1.1-ml.13 loaded!` in the MelonLoader log.
 
 ## Documentation
 
@@ -75,6 +75,7 @@ Open an issue using the bug-report template and attach the complete MelonLoader 
 
 - Mod creator and plant concepts: **Auro**
 - Plant and fusion artwork: **Red Reel** and **Retrosphere**
+- Preview video editing: **Mathys**
 - Built for the PvZ Fusion modding community using the MelonLoader port of CustomizeLib
 
 ## Disclaimer

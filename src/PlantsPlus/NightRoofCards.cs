@@ -1,4 +1,4 @@
-using CustomizeLib.BepInEx;
+using CustomizeLib.MelonLoader;
 using HarmonyLib;
 using Il2Cpp;
 using System;
@@ -30,7 +30,9 @@ namespace PlantsPlus.Core
         private static bool sandboxPageMissingLogged;
         private static int lastLimitedLevelLogged = int.MinValue;
         private static SeedLibrary? limitedLevelConfiguredLibrary;
+        private static SeedLibrary? customizeLibFinishedLibrary;
         private static SeedLibrary? repairedNormalLibrary;
+        private static Transform? evolutionWarElectronionContainer;
         private static float nextNormalRepairAttempt;
 
         internal static void OnStart()
@@ -110,12 +112,23 @@ namespace PlantsPlus.Core
         internal static void ApplyCardSkin(CardUI card)
         {
             // Every playable Electronion card uses the Night Roof
-            // background. The sandbox is the sole exception: its zero-cost
-            // LibraryCard deliberately keeps the native sandbox style.
+            // background. The sandbox is the sole exception: both its
+            // zero-cost LibraryCard and the selected card-bank copy keep the
+            // native sandbox style.
             if (card == null ||
                 card.thePlantType != PlantType.ElectricOnion ||
-                IsSandboxCard(card))
+                IsSandboxContext())
             {
+                return;
+            }
+
+            SeedLibrary library = SeedLibrary.Instance;
+            if (library != null &&
+                IsLimitedChallengeSelection(library))
+            {
+                // Restricted levels only need a normal native seed packet
+                // that is present but unavailable. The Night Roof Adventure
+                // artwork is intentionally not used here.
                 return;
             }
 
@@ -219,6 +232,23 @@ namespace PlantsPlus.Core
                 );
         }
 
+        internal static void EnforceLimitedLevelAvailability(CardUI card)
+        {
+            if (card == null ||
+                card.thePlantType != PlantType.ElectricOnion ||
+                IsSandboxContext())
+            {
+                return;
+            }
+
+            SeedLibrary library = SeedLibrary.Instance;
+            if (library != null &&
+                IsLimitedChallengeSelection(library))
+            {
+                BlockLimitedLevelCard(card);
+            }
+        }
+
         private static void BlockLimitedLevelCard(CardUI card)
         {
             card.isAvailable = false;
@@ -240,17 +270,28 @@ namespace PlantsPlus.Core
             SeedLibrary library
         )
         {
-            if (library == null ||
-                GameAPP.theBoardType != LevelType.Challenge)
+            if (library == null || IsSandboxContext())
             {
                 return false;
             }
 
+            // Evolution War rebuilds its selection library before the board
+            // tag is finalized. The level ID is already available here and
+            // is therefore the reliable signal on the seed-selection screen.
+            if (GameAPP.theBoardLevel == (int)ChallengeLevel.EvolutionWar)
+                return true;
+
+            Board board = Board.Instance;
+
+            // The Gods: Evolved uses the native evolution-war tag instead of
+            // the generic Challenge board type. Keep Electronion visible in
+            // these restricted selections, but do not make it selectable.
+            if (board != null && board.boardTag.evolutionWar)
+                return true;
+
             // No Plants+ challenge explicitly authorizes Electronion yet.
-            // Challenge card permissions are level-specific, so keep its
-            // card visible but locked by default. Individual level IDs can
-            // be whitelisted here later when Cecil adds Electronion to them.
-            return true;
+            // Individual level IDs can be whitelisted here later.
+            return GameAPP.theBoardType == LevelType.Challenge;
         }
 
         internal static bool EnsureSandboxElectronion(
@@ -710,12 +751,6 @@ namespace PlantsPlus.Core
                 return;
             }
 
-            if (repairedNormalLibrary == library &&
-                normalCardContainer != null)
-            {
-                return;
-            }
-
             if (Time.unscaledTime < nextNormalRepairAttempt)
                 return;
 
@@ -728,28 +763,12 @@ namespace PlantsPlus.Core
                     normalCardContainer = null;
                     normalCardInstance = null;
                     carbonCopyInstance = null;
+                    evolutionWarElectronionContainer = null;
                     limitedLevelConfiguredLibrary = null;
                 }
 
-                Transform? normalCards = null;
-
-                for (int index = 0;
-                     index < library.cardPagesContainer.childCount;
-                     index++)
-                {
-                    Transform child =
-                        library.cardPagesContainer.GetChild(index);
-
-                    if (child != null &&
-                        child.name.Equals(
-                            "NormalCards",
-                            StringComparison.Ordinal
-                        ))
-                    {
-                        normalCards = child;
-                        break;
-                    }
-                }
+                Transform? normalCards =
+                    FindNormalCardsRoot(library);
 
                 if (normalCards == null)
                 {
@@ -759,11 +778,49 @@ namespace PlantsPlus.Core
                     return;
                 }
 
+                // Restricted challenge libraries use a different card
+                // hierarchy from Adventure. Always route them through the
+                // dedicated single-card path before the generic normal-pair
+                // repair can see the newly created card and run again.
+                if (IsLimitedChallengeSelection(library))
+                {
+                    // PatchMgr.ShowCards rebuilds this hierarchy after a
+                    // delay. Creating our replacement before that point
+                    // leaves it on a page which CustomizeLib then destroys.
+                    if (customizeLibFinishedLibrary != library)
+                        return;
+
+                    EnsureEvolutionWarElectronion(
+                        library,
+                        normalCards
+                    );
+                    return;
+                }
+
                 Transform? electronionContainer =
                     FindDirectCardContainer(
                         normalCards,
                         PlantType.ElectricOnion
                     );
+
+                // Some special levels rebuild the card pages while retaining
+                // the same SeedLibrary instance. Only trust the cache when
+                // the current live container is still the complete native
+                // pair and is still located on NormalCards page 2.
+                if (repairedNormalLibrary == library &&
+                    electronionContainer == normalCardContainer &&
+                    IsHealthyNormalPair(
+                        electronionContainer,
+                        normalCards
+                    ))
+                {
+                    return;
+                }
+
+                // The same SeedLibrary can survive while Evolution War
+                // rebuilds all of its page objects. Its previous availability
+                // cache no longer describes the newly created cards.
+                limitedLevelConfiguredLibrary = null;
 
                 if (electronionContainer == null)
                 {
@@ -854,6 +911,489 @@ namespace PlantsPlus.Core
             }
         }
 
+        internal static bool SuppressLateCustomizeLibElectronionCard()
+        {
+            SeedLibrary library = SeedLibrary.Instance;
+            if (library == null ||
+                !IsLimitedChallengeSelection(library))
+            {
+                return false;
+            }
+
+            bool removed =
+                CustomCore.CustomNormalCards.Remove(
+                    PlantType.ElectricOnion
+                );
+
+            if (removed)
+            {
+                Plugin.Logger.LogInfo(
+                    "[Night Roof] Suppressed CustomizeLib's incompatible " +
+                    "Electronion normal-card clone for this restricted " +
+                    "selection."
+                );
+            }
+
+            return removed;
+        }
+
+        internal static void FinishCustomizeLibCardCreation(
+            bool electronionWasSuppressed
+        )
+        {
+            if (electronionWasSuppressed)
+            {
+                // Restore the global registration for Adventure and every
+                // ordinary level. Only this one ShowCards invocation was
+                // filtered.
+                CustomCore.RegisterCustomNormalCard(
+                    PlantType.ElectricOnion,
+                    0
+                );
+            }
+
+            SeedLibrary library = SeedLibrary.Instance;
+            if (library != null &&
+                IsLimitedChallengeSelection(library))
+            {
+                customizeLibFinishedLibrary = library;
+                nextNormalRepairAttempt = 0f;
+            }
+
+            RepairCardsAfterCustomizeLibCreation();
+        }
+
+        private static bool EnsureEvolutionWarElectronion(
+            SeedLibrary library,
+            Transform normalCards
+        )
+        {
+            if (library == null || normalCards == null)
+                return false;
+
+            if (evolutionWarElectronionContainer != null &&
+                evolutionWarElectronionContainer.parent != null)
+            {
+                CardUI[] existingCards =
+                    evolutionWarElectronionContainer
+                        .GetComponentsInChildren<CardUI>(true);
+
+                for (int index = 0;
+                     index < existingCards.Length;
+                     index++)
+                {
+                    CardUI existing = existingCards[index];
+                    if (existing != null &&
+                        existing.thePlantType ==
+                        PlantType.ElectricOnion)
+                    {
+                        BlockLimitedLevelCard(existing);
+                    }
+                }
+
+                repairedNormalLibrary = library;
+                return true;
+            }
+
+            Transform? template =
+                FindDirectCardContainer(
+                    normalCards,
+                    PlantType.SnowPresent
+                );
+
+            if (template == null)
+            {
+                template = FindDirectCardContainer(
+                    normalCards,
+                    PlantType.Peashooter
+                );
+            }
+
+            if (template == null)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Night Roof] Limited-level native card template " +
+                    "was not ready."
+                );
+                return false;
+            }
+
+            Transform firstPage = template.parent;
+            if (firstPage == null)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Night Roof] Limited-level live page containing the " +
+                    "native template was not found."
+                );
+                return false;
+            }
+
+            // Remove leftovers made by older Plants+ hotfixes. They have a
+            // unique name, so native and CustomizeLib cards are untouched.
+            int removedPlantsPlusClones = 0;
+            for (int pageIndex = 0;
+                 pageIndex < normalCards.childCount;
+                 pageIndex++)
+            {
+                Transform page = normalCards.GetChild(pageIndex);
+                if (page == null)
+                    continue;
+
+                for (int childIndex = page.childCount - 1;
+                     childIndex >= 0;
+                     childIndex--)
+                {
+                    Transform candidate = page.GetChild(childIndex);
+                    if (candidate == null ||
+                        !candidate.name.StartsWith(
+                            "PlantsPlus_Electronion_",
+                            StringComparison.Ordinal
+                        ))
+                    {
+                        continue;
+                    }
+
+                    candidate.gameObject.SetActive(false);
+                    UnityEngine.Object.Destroy(candidate.gameObject);
+                    removedPlantsPlusClones++;
+                }
+            }
+
+            // CustomizeLib's normal-card clone is not parented like the
+            // native cards in Evolution War. Hide every copy it produced
+            // before creating one clean native grid item below.
+            CardUI[] previousCards =
+                library.cardPagesContainer
+                    .GetComponentsInChildren<CardUI>(true);
+            int hiddenBrokenCards = 0;
+
+            for (int index = 0;
+                 index < previousCards.Length;
+                 index++)
+            {
+                CardUI previous = previousCards[index];
+                if (previous == null ||
+                    previous.thePlantType !=
+                    PlantType.ElectricOnion)
+                {
+                    continue;
+                }
+
+                previous.gameObject.SetActive(false);
+                hiddenBrokenCards++;
+            }
+
+            CardUI[] templateCards =
+                template.GetComponentsInChildren<CardUI>(true);
+            CardUI? templateCard = null;
+
+            for (int index = 0;
+                 index < templateCards.Length;
+                 index++)
+            {
+                CardUI candidate = templateCards[index];
+                if (candidate != null &&
+                    candidate.gameObject.activeSelf)
+                {
+                    templateCard = candidate;
+                    break;
+                }
+            }
+
+            if (templateCard == null && templateCards.Length > 0)
+                templateCard = templateCards[0];
+
+            if (templateCard == null)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Night Roof] Limited-level native template had no " +
+                    "usable CardUI."
+                );
+                return false;
+            }
+
+            // LateCreateCardPage rebuilds the grid it paginates. Create the
+            // second page first; a custom card instantiated before this call
+            // is destroyed with the old grid and gets recreated every frame.
+            Transform? secondPage =
+                library.LateCreateCardPage("NormalCards");
+
+            if (secondPage == null)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Night Roof] Limited-level second page could not be " +
+                    "created."
+                );
+                return false;
+            }
+
+            // Clone the complete native grid item. The restricted challenge
+            // menu requires the layout components and anchors carried by
+            // this container; a hand-made empty RectTransform exists in the
+            // hierarchy but is never rendered by its page.
+            GameObject cardContainer =
+                UnityEngine.Object.Instantiate(
+                    template.gameObject,
+                    secondPage
+                );
+            cardContainer.name =
+                "PlantsPlus_Electronion_EvolutionWarContainer";
+            cardContainer.SetActive(true);
+            cardContainer.transform.SetAsLastSibling();
+
+            CardUI[] clonedCards =
+                cardContainer.GetComponentsInChildren<CardUI>(true);
+            CardUI? card = null;
+
+            for (int index = 0;
+                 index < clonedCards.Length;
+                 index++)
+            {
+                CardUI candidate = clonedCards[index];
+                if (candidate == null)
+                    continue;
+
+                if (card == null && candidate.gameObject.activeSelf)
+                {
+                    card = candidate;
+                    continue;
+                }
+
+                // This level needs one locked seed packet, not a Carbon Copy
+                // or another template packet.
+                candidate.gameObject.SetActive(false);
+            }
+
+            if (card == null && clonedCards.Length > 0)
+            {
+                card = clonedCards[0];
+                card.gameObject.SetActive(true);
+            }
+
+            if (card == null)
+            {
+                UnityEngine.Object.Destroy(cardContainer);
+                Plugin.Logger.LogWarning(
+                    "[Night Roof] Limited-level native grid clone had no " +
+                    "CardUI."
+                );
+                return false;
+            }
+
+            card.gameObject.name =
+                "PlantsPlus_Electronion_EvolutionWarCardUI";
+
+            var electronionData =
+                PlantDataManager.PlantData_Default[
+                    PlantType.ElectricOnion
+                ];
+
+            card.gameObject.SetActive(true);
+            card.thePlantType = PlantType.ElectricOnion;
+            card.theSeedType = (int)PlantType.ElectricOnion;
+            card.theSeedCost = electronionData.cost;
+            card.fullCD = electronionData.cd;
+            card.CD = card.fullCD;
+            card.parent = cardContainer;
+            card.isExtra = false;
+
+            // Refresh only after the type fields are correct. Doing this
+            // while the clone still identifies as Peashooter restores the
+            // Peashooter packet above the Electronion preview.
+            Mouse.Instance.ChangeCardSprite(
+                PlantType.ElectricOnion,
+                card
+            );
+            card.ChangeCardSprite();
+
+            SpriteRenderer? previewRenderer =
+                GameAPP.resourcesManager
+                    .plantPreviews[PlantType.ElectricOnion]
+                    .GetComponent<SpriteRenderer>();
+            Image? cardPreviewImage =
+                card.transform.childCount > 0
+                    ? card.transform
+                        .GetChild(0)
+                        .GetComponent<Image>()
+                    : null;
+
+            if (previewRenderer != null &&
+                cardPreviewImage != null)
+            {
+                cardPreviewImage.sprite = previewRenderer.sprite;
+            }
+
+            if (card.transform.childCount > 1)
+            {
+                TextMeshProUGUI? costText =
+                    card.transform
+                        .GetChild(1)
+                        .GetComponent<TextMeshProUGUI>();
+
+                if (costText != null)
+                    costText.text = electronionData.cost.ToString();
+            }
+
+            // Normal-card grid items display a separate shared preview and
+            // cost in container child 0. Updating only CardUI changes the
+            // logical plant while leaving the visible Peashooter artwork and
+            // its 100-Sun label untouched.
+            if (cardContainer.transform.childCount > 0)
+            {
+                Transform visibleHeader =
+                    cardContainer.transform.GetChild(0);
+
+                if (visibleHeader != null &&
+                    visibleHeader.childCount > 0 &&
+                    previewRenderer != null)
+                {
+                    Image? visiblePreview =
+                        visibleHeader
+                            .GetChild(0)
+                            .GetComponent<Image>();
+
+                    if (visiblePreview != null)
+                    {
+                        visiblePreview.sprite = previewRenderer.sprite;
+                        visiblePreview.SetNativeSize();
+
+                        RectTransform? visibleRect =
+                            visiblePreview.rectTransform;
+                        RectTransform? cardPreviewRect =
+                            cardPreviewImage != null
+                                ? cardPreviewImage.rectTransform
+                                : null;
+
+                        if (visibleRect != null &&
+                            cardPreviewRect != null)
+                        {
+                            visibleRect.localScale =
+                                cardPreviewRect.localScale;
+                            visibleRect.sizeDelta =
+                                cardPreviewRect.sizeDelta;
+                        }
+                    }
+                }
+
+                if (visibleHeader != null &&
+                    visibleHeader.childCount > 1)
+                {
+                    TextMeshProUGUI? visibleCost =
+                        visibleHeader
+                            .GetChild(1)
+                            .GetComponent<TextMeshProUGUI>();
+
+                    if (visibleCost != null)
+                    {
+                        visibleCost.text =
+                            electronionData.cost.ToString();
+                    }
+                }
+            }
+
+            ApplyCardSkin(card);
+            BlockLimitedLevelCard(card);
+
+            RectTransform? secondPageRect =
+                secondPage as RectTransform;
+            if (secondPageRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(
+                    secondPageRect
+                );
+            }
+
+            evolutionWarElectronionContainer =
+                cardContainer.transform;
+            normalCardContainer = cardContainer.transform;
+            normalCardInstance = card;
+            carbonCopyInstance = null;
+            limitedLevelConfiguredLibrary = library;
+            repairedNormalLibrary = library;
+
+            Plugin.Logger.LogInfo(
+                "[Night Roof] Limited-level Electronion rebuilt as " +
+                "one locked native card on NormalCards page 2" +
+                " | Board level = " + GameAPP.theBoardLevel +
+                " | Board type = " + GameAPP.theBoardType +
+                " | Broken cards hidden = " + hiddenBrokenCards +
+                " | Old Plants+ clones removed = " +
+                removedPlantsPlusClones +
+                " | Cloned object = complete native grid item" +
+                " | Source page = " + firstPage.name +
+                "#" + firstPage.GetInstanceID() +
+                " | Result page = " + secondPage.name +
+                "#" + secondPage.GetInstanceID() +
+                " | Same page = " + (firstPage == secondPage) +
+                " | Result sibling = " +
+                cardContainer.transform.GetSiblingIndex() +
+                " | Separate parent = " +
+                (card.parent == cardContainer) +
+                " | Visible header refreshed = true" +
+                " | Cached after pagination = true"
+            );
+            return true;
+        }
+
+        private static Transform? FindNormalCardsRoot(
+            SeedLibrary library
+        )
+        {
+            if (library == null || library.cardPagesContainer == null)
+                return null;
+
+            for (int index = 0;
+                 index < library.cardPagesContainer.childCount;
+                 index++)
+            {
+                Transform child =
+                    library.cardPagesContainer.GetChild(index);
+
+                if (child != null &&
+                    child.name.Equals(
+                        "NormalCards",
+                        StringComparison.Ordinal
+                    ))
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsHealthyNormalPair(
+            Transform? cardContainer,
+            Transform normalCards
+        )
+        {
+            if (cardContainer == null ||
+                cardContainer.parent == null ||
+                cardContainer.parent.parent != normalCards ||
+                cardContainer.parent.GetSiblingIndex() != 1)
+            {
+                return false;
+            }
+
+            CardUI[] cards =
+                cardContainer.GetComponentsInChildren<CardUI>(true);
+            int electronionCards = 0;
+
+            for (int index = 0; index < cards.Length; index++)
+            {
+                CardUI card = cards[index];
+                if (card == null)
+                    continue;
+
+                if (card.thePlantType != PlantType.ElectricOnion)
+                    return false;
+
+                electronionCards++;
+            }
+
+            return electronionCards == 2;
+        }
+
         private static int NormalizeNormalCardContainer(
             Transform cardContainer
         )
@@ -929,6 +1469,25 @@ namespace PlantsPlus.Core
                 baseCost * 2,
                 true
             );
+
+            // CustomizeLib keeps child 0 as a visible source/template packet
+            // after cloning the real base and Carbon Copy CardUIs. Once the
+            // container is moved into a paginated native grid, that source is
+            // laid out beside the selectable base card and looks like a
+            // duplicate Electronion. It has no CardUI and is safe to hide.
+            if (cardContainer.childCount > 0)
+            {
+                Transform visualTemplate =
+                    cardContainer.GetChild(0);
+
+                if (visualTemplate != null &&
+                    visualTemplate
+                        .GetComponentsInChildren<CardUI>(true)
+                        .Length == 0)
+                {
+                    visualTemplate.gameObject.SetActive(false);
+                }
+            }
 
             normalCardContainer = cardContainer;
             normalCardInstance = normalCard;
@@ -1437,6 +1996,9 @@ namespace PlantsPlus.Core
 
         private static bool IsSandboxCard(CardUI card)
         {
+            if (IsSandboxContext())
+                return true;
+
             if (card == null || card.transform == null)
                 return false;
 
@@ -1476,6 +2038,12 @@ namespace PlantsPlus.Core
             }
 
             return false;
+        }
+
+        private static bool IsSandboxContext()
+        {
+            Board board = Board.Instance;
+            return board != null && board.boardTag.isIZ;
         }
 
         private static void EnsureCardSprite()
@@ -1642,14 +2210,30 @@ namespace PlantsPlus.Core
         }
 
         // CustomizeLib creates custom cards from a coroutine 1.5 seconds
-        // after SeedLibrary.Awake. This is the first deterministic point at
-        // which Electronion's complete normal-card container really exists.
+        // after SeedLibrary.Awake. Its generic clone is incompatible with
+        // restricted challenge layouts: it produces an Electronion preview
+        // under a Peashooter seed packet. Filter only Electronion out of that
+        // invocation, let CustomizeLib finish rebuilding the pages, then add
+        // the single locked native card ourselves.
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
+        [HarmonyPatch(typeof(PatchMgr), nameof(PatchMgr.ShowCards))]
+        private static void CustomizeLibShowCardsPrefix(
+            out bool __state
+        )
+        {
+            __state =
+                NightRoofCards.SuppressLateCustomizeLibElectronionCard();
+        }
+
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(PatchMgr), nameof(PatchMgr.ShowCards))]
-        private static void CustomizeLibShowCardsPostfix()
+        private static void CustomizeLibShowCardsPostfix(
+            bool __state
+        )
         {
-            NightRoofCards.RepairCardsAfterCustomizeLibCreation();
+            NightRoofCards.FinishCustomizeLibCardCreation(__state);
         }
 
         [HarmonyPostfix]
@@ -1699,6 +2283,7 @@ namespace PlantsPlus.Core
             // after Start/SetImage. Reapply the Night Roof background at the
             // final CardUI stage so every non-sandbox level stays consistent.
             NightRoofCards.ApplyCardSkin(__instance);
+            NightRoofCards.EnforceLimitedLevelAvailability(__instance);
         }
 
         [HarmonyPrefix]

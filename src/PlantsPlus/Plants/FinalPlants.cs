@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using CustomizeLib.BepInEx;
+using CustomizeLib.MelonLoader;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppAlmanacData;
