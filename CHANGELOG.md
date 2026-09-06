@@ -1,5 +1,6 @@
 # Changelog
 
+<<<<<<< Updated upstream
 ## [1.1.1] - 2026-07-28
 
 Compatibility and quality hotfix for PvZ Fusion 3.8.1 and CustomizeLib.MelonLoader 3.8.1-ml.1.
@@ -11,6 +12,40 @@ Compatibility and quality hotfix for PvZ Fusion 3.8.1 and CustomizeLib.MelonLoad
 - Kept Electronion on the second normal-card page without the Peashooter packet, missing preview or duplicate template card.
 - Preserved the normal Adventure card and Carbon Copy behavior.
 - Preserved the animated Plants+ main-menu logo on the updated game build.
+=======
+## [1.2.0] - 2026-09-06
+
+Third public Plants+ release for PvZ Fusion 3.8.1.
+
+### Added
+
+- Twelve new custom plants, bringing Plants+ to 32 plants total:
+  - Sea Sharpshooter — an aquatic Sharpshooter that grows through three stronger stages.
+  - Cherry StarBomber — fires two rapid volleys of explosive Cherry Stars.
+  - Three-Buckpeater — attacks three lanes with armor-breaking iron peas.
+  - Sakura Sharpshooter — fires explosive thorns and reacts with nearby Explode-o-shooter blasts.
+  - Bomber Drone — a hovering Cherryshooter-based support shooter.
+  - Frostbite Drone — a hovering Snow Pea-based support shooter.
+  - Ice-Lord Cactus — switches between ground and anti-air attack patterns.
+  - Scovilia Pepper — unleashes Jalapeno fire across three lanes.
+  - Atomray-shroom — fires a slowing ray and can trigger Demise-shroom effects.
+  - Sauerkraut-pult — changes ammunition depending on how close zombies are to the house.
+  - Cherry Cabbage — becomes stronger and more explosive as zombies advance.
+  - Lob-shroom — lobs spores and can share a tile like Puff-shroom.
+- New Almanac entries, recipes, projectiles, effects and previews for the v1.2 plants.
+- Night Roof support in Super Level Editor+.
+- New Plants+ v1.2 main-menu logo and updated in-game changelog.
+
+### Changed / polished
+
+- Three-Buckpeater now fires correctly and has its intended shadow.
+- Sakura Sharpshooter's projectile position was corrected.
+- General gameplay, visual and stability polish across Plants+.
+
+### Delayed
+
+- Boreal Orchid is **not included in v1.2.0** and will arrive in a later update.
+>>>>>>> Stashed changes
 
 ## [1.1.0] - 2026-07-26
 

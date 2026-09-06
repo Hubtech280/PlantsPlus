@@ -1,6 +1,10 @@
 # Notice
 
+<<<<<<< Updated upstream
 ## Plants+ 1.2.0
+=======
+This repository contains the source code and custom resources for the fan-made **Plants+** mod.
+>>>>>>> Stashed changes
 
 This project is a mod for **PvZ Fusion** and requires the base game together with the required modding environment to run properly.
 
