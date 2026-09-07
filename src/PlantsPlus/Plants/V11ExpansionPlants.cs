@@ -2260,6 +2260,37 @@ namespace PlantsPlus.Plants
     [HarmonyPatch]
     internal static class V11ExpansionCombatPatches
     {
+        private static bool queuedEffectsFaultLogged;
+        private static bool sandboxElectronionFaultLogged;
+
+        private static void LogBoardUpdateFaultOnce(
+            ref bool alreadyLogged,
+            string subsystem,
+            Exception exception
+        )
+        {
+            if (alreadyLogged)
+                return;
+
+            alreadyLogged = true;
+
+            // Board.Update can run during awkward scene-transition frames.
+            // Never let logging itself turn a safely caught exception into
+            // another NullReferenceException.
+            try
+            {
+                Plugin.Logger?.LogWarning(
+                    "[Plants+ Board.Update] " + subsystem +
+                    " failed once and was disabled for this frame: " +
+                    exception.GetType().Name + ": " + exception.Message
+                );
+            }
+            catch
+            {
+                // Intentionally silent: the gameplay patch must never throw
+                // from Board.Update merely because the logger is unavailable.
+            }
+        }
         [HarmonyPatch(typeof(Zombie), nameof(Zombie.TakeDamage))]
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last)]
@@ -2289,16 +2320,32 @@ namespace PlantsPlus.Plants
         [HarmonyPriority(Priority.Last)]
         private static void BoardUpdatePostfix()
         {
+            // Keep the two per-frame systems isolated. One broken subsystem
+            // must not stop the other, and absolutely nothing is allowed to
+            // escape this postfix into the native Board.Update trampoline.
             try
             {
                 V11ExpansionBootstrap.TickQueuedEffects();
+            }
+            catch (Exception exception)
+            {
+                LogBoardUpdateFaultOnce(
+                    ref queuedEffectsFaultLogged,
+                    "queued V1.1 combat effects",
+                    exception
+                );
+            }
+
+            try
+            {
                 NightRoofCards.TryEnsureSandboxElectronion();
             }
             catch (Exception exception)
             {
-                Plugin.Logger.LogWarning(
-                    "[Plants+ V1.1] Deferred effect frame skipped safely: " +
-                    exception.Message
+                LogBoardUpdateFaultOnce(
+                    ref sandboxElectronionFaultLogged,
+                    "Night Roof sandbox Electronion hook",
+                    exception
                 );
             }
         }

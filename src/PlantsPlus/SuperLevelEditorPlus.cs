@@ -53,6 +53,8 @@ namespace PlantsPlus.Core
                 "Fog", PlantType.Plantern, null, 310),
             [SceneType.Roof] = new SceneVisual(
                 "Roof", PlantType.Cabbagepult, null, 310),
+            [SceneType.NightRoof] = new SceneVisual(
+                "NightRoof", (PlantType)Plants.LobShroom.ID, null, 310),
             [SceneType.Travel_roof] = new SceneVisual(
                 "Roof", PlantType.Melonpult, null, 310),
             [SceneType.Travel_roof_dusk] = new SceneVisual(
@@ -146,20 +148,29 @@ namespace PlantsPlus.Core
         {
             try
             {
-                if (MapData_cs.SceneName == null ||
-                    MapData_cs.SceneName.ContainsKey(
-                        SceneType.NightWinter))
-                {
+                if (MapData_cs.SceneName == null)
                     return;
+
+                if (!MapData_cs.SceneName.ContainsKey(SceneType.NightRoof))
+                {
+                    MapData_cs.SceneName.Add(
+                        SceneType.NightRoof,
+                        "Night Roof"
+                    );
                 }
 
-                MapData_cs.SceneName.Add(
-                    SceneType.NightWinter,
-                    "Christmas Snow"
-                );
+                if (!MapData_cs.SceneName.ContainsKey(
+                        SceneType.NightWinter))
+                {
+                    MapData_cs.SceneName.Add(
+                        SceneType.NightWinter,
+                        "Christmas Snow"
+                    );
+                }
+
                 Plugin.Logger.LogInfo(
-                    "[Super Level Editor+] Christmas Snow added to " +
-                    "the scene selector."
+                    "[Super Level Editor+] Night Roof and Christmas Snow " +
+                    "are present in the scene selector."
                 );
             }
             catch (Exception exception)
@@ -219,15 +230,6 @@ namespace PlantsPlus.Core
                             true
                         );
 
-                foreach (CustomButton_scene button in buttons)
-                {
-                    if (button != null &&
-                        button.sceneType == SceneType.NightWinter)
-                    {
-                        return;
-                    }
-                }
-
                 CustomButton_scene? template =
                     buttons.Length > 0
                         ? buttons[buttons.Length - 1]
@@ -235,41 +237,78 @@ namespace PlantsPlus.Core
                 if (template == null)
                     return;
 
-                GameObject clone = UnityEngine.Object.Instantiate(
-                    template.gameObject,
-                    menu.ScenesContent
+                EnsureSceneButton(
+                    menu,
+                    buttons,
+                    template,
+                    SceneType.NightRoof,
+                    "Night Roof",
+                    "PlantsPlus_NightRoofScene"
                 );
-                clone.name = "PlantsPlus_ChristmasSnowScene";
-                clone.transform.SetAsLastSibling();
-                clone.SetActive(true);
-
-                CustomButton_scene christmasButton =
-                    clone.GetComponent<CustomButton_scene>();
-                if (christmasButton == null)
-                {
-                    UnityEngine.Object.Destroy(clone);
-                    return;
-                }
-
-                christmasButton.sceneType = SceneType.NightWinter;
-                if (christmasButton.sceneText != null)
-                {
-                    christmasButton.sceneText.text =
-                        "Christmas Snow";
-                }
-
-                Plugin.Logger.LogInfo(
-                    "[Super Level Editor+] Christmas Snow button " +
-                    "restored at the end of the scene selector."
+                EnsureSceneButton(
+                    menu,
+                    buttons,
+                    template,
+                    SceneType.NightWinter,
+                    "Christmas Snow",
+                    "PlantsPlus_ChristmasSnowScene"
                 );
             }
             catch (Exception exception)
             {
                 Plugin.Logger.LogError(
-                    "[Super Level Editor+] Could not restore the " +
-                    "Christmas Snow button safely: " + exception
+                    "[Super Level Editor+] Could not restore the extra " +
+                    "scene buttons safely: " + exception
                 );
             }
+        }
+
+        private static void EnsureSceneButton(
+            CustomMenu menu,
+            CustomButton_scene[] buttons,
+            CustomButton_scene template,
+            SceneType sceneType,
+            string label,
+            string objectName
+        )
+        {
+            foreach (CustomButton_scene button in buttons)
+            {
+                if (button != null && button.sceneType == sceneType)
+                    return;
+            }
+
+                GameObject clone = UnityEngine.Object.Instantiate(
+                    template.gameObject,
+                    menu.ScenesContent
+                );
+                clone.name = objectName;
+                clone.transform.SetAsLastSibling();
+                clone.SetActive(true);
+
+                CustomButton_scene sceneButton =
+                    clone.GetComponent<CustomButton_scene>();
+                if (sceneButton == null)
+                {
+                    UnityEngine.Object.Destroy(clone);
+                    return;
+                }
+
+                sceneButton.sceneType = sceneType;
+                if (sceneButton.sceneText != null)
+                    sceneButton.sceneText.text = label;
+
+                DecorateButton(sceneButton);
+
+                Plugin.Logger.LogInfo(
+                    "[Super Level Editor+] " + label + " button " +
+                    "restored at the end of the scene selector."
+                );
+        }
+
+        internal static Sprite? GetNightRoofPreview()
+        {
+            return GetBackgroundSprite("NightRoof", 310);
         }
 
         internal static void DecorateCurrentScene(CustomMenu menu)

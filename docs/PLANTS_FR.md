@@ -79,3 +79,20 @@ Peashooter > Spruce Sharpshooter. Tire des pins qui repoussent le premier zombie
 ## Icytronion — 6019
 
 Amp-nion > Ice-shroom. Les plantes de la famille électrique connectées augmentent ses dégâts. Son tir en chaîne ralentit chaque cible et possède 25 % de chance de la geler.
+
+
+## Sea Sharpshooter — 6020
+
+Spruce Sharpshooter > Sea-shroom. Plante aquatique à trois stades de croissance : 20, 40 puis 60 dégâts.
+
+## Cherry StarBomber — 6021
+
+Plante Epic Odyssey qui tire deux salves de cinq Cherry Stars. Ses modificateurs peuvent ajouter le guidage et doubler les dégâts après trois cases.
+
+## Three-Buckpeater — 6022
+
+Threepeater > Bucket. Tire sur trois lignes, inflige 80 dégâts par ligne, repousse les zombies et brise les armures de type 2.
+
+## Sakura Sharpshooter — 6023
+
+Cherry Bomb + Spruce Sharpshooter. Tire des épines infligeant 30 dégâts. Chaque projectile a 15 % de chance de déclencher une explosion Cherry Bomb de 300 dégâts. Si une explosion d'Explode-o-shooter touche un zombie adjacent à Sakura Sharpshooter, ce zombie a 50 % de chance d'exploser à son tour pour les dégâts complets ; une autre cible aléatoire dans le 3x3 explose aussi pour la moitié des dégâts, soit 150 actuellement.

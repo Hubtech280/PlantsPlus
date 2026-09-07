@@ -878,6 +878,59 @@ namespace PlantsPlus.Core
             }
         }
 
+        internal static Animator? ApplyExactLocalAnimationController(
+            GameObject instance,
+            string plantName
+        )
+        {
+            if (instance == null)
+                return null;
+
+            try
+            {
+                if (!localAnimationControllers.TryGetValue(
+                        plantName,
+                        out RuntimeAnimatorController? cachedController
+                    ) || cachedController == null)
+                {
+                    return null;
+                }
+
+                Animator? animator =
+                    instance.GetComponentInChildren<Animator>(true);
+
+                if (animator == null)
+                    return null;
+
+                // Some native plant initialization runs after the custom
+                // behaviour's Start and can replace an override controller.
+                // Assign the controller authored in this bundle directly so
+                // its original states, transitions and timings stay intact.
+                animator.runtimeAnimatorController = cachedController;
+                animator.Rebind();
+                animator.Update(0f);
+
+                Plugin.Logger.LogInfo(
+                    "[" + plantName + "] Exact local animation controller " +
+                    "assigned | Plant instance = " +
+                    instance.GetInstanceID() + " | Controller = " +
+                    cachedController.name + "#" +
+                    cachedController.GetInstanceID()
+                );
+
+                return animator;
+            }
+            catch (Exception exception)
+            {
+                Plugin.Logger.LogWarning(
+                    "[" + plantName +
+                    "] Exact animation assignment failed safely: " +
+                    exception.Message
+                );
+                return null;
+            }
+        }
+
         internal static void ApplyNativeShooterControllerWithLocalClips(
             GameObject instance,
             string plantName,
@@ -1907,6 +1960,73 @@ namespace PlantsPlus.Core
             return root;
         }
 
+        internal static Zombie? FindLiveZombieForAttachedSaw(
+            int instanceID
+        )
+        {
+            try
+            {
+                return FindLiveZombieByInstanceID(
+                    Lawnf.GetAllZombies(false),
+                    instanceID
+                );
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        internal static bool SpawnAttachedSawRuntime(
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 scale,
+            Zombie target,
+            int damage
+        )
+        {
+            if (target == null)
+                return false;
+
+            GameObject? visual = null;
+
+            try
+            {
+                visual = CreateAttachedSawVisualFromCache(
+                    position,
+                    rotation,
+                    scale
+                );
+
+                if (visual == null)
+                    return false;
+
+                Vector3 offset =
+                    position - target.transform.position;
+
+                AttachedSawRuntime runtime =
+                    visual.AddComponent<AttachedSawRuntime>();
+                runtime.Initialize(
+                    target.GetInstanceID(),
+                    damage,
+                    offset
+                );
+
+                return true;
+            }
+            catch (Exception exception)
+            {
+                if (visual != null)
+                    UnityEngine.Object.Destroy(visual);
+
+                Plugin.Logger.LogWarning(
+                    "[Not-a-pea] Attached runtime creation failed safely: " +
+                    exception.Message
+                );
+                return false;
+            }
+        }
+
         private static Vector3 DivideScale(Vector3 value, Vector3 divisor)
         {
             return new Vector3(
@@ -2744,7 +2864,18 @@ namespace PlantsPlus.Plants
         public const int DamagePerTick = 20;
         public const int AttachedDamageDivisor = 2;
 
+        private sealed class DeferredSawImpact
+        {
+            public int ZombieInstanceID;
+            public bool ShouldAttach;
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public Vector3 Scale;
+        }
+
         private readonly HashSet<int> hitZombieIDs = new HashSet<int>();
+        private readonly List<DeferredSawImpact> deferredImpacts =
+            new List<DeferredSawImpact>();
         private Bullet? nativeBullet;
         private Rigidbody2D? body;
         private Collider2D? projectileCollider;
@@ -2786,6 +2917,19 @@ namespace PlantsPlus.Plants
             attachmentLocked = false;
             motionStored = false;
             hitZombieIDs.Clear();
+            deferredImpacts.Clear();
+        }
+
+        public void Update()
+        {
+            // beta.12.2: defer collision work outside the native physics
+            // callback without using a global Board.Update Harmony postfix.
+            // The old global TickAttachedSaws path could hard-crash the CLR
+            // while MonoMod/Il2CppInterop tried to JIT-compile it.
+            if (deferredImpacts.Count == 0)
+                return;
+
+            ProcessDeferredImpacts();
         }
 
         internal void ConfigureForFlight()
@@ -2840,11 +2984,92 @@ namespace PlantsPlus.Plants
             if (shouldAttach)
                 PauseForAttachment();
 
-            V11PlantsBootstrap.BeginSawImpact(
-                this,
-                hitZombie,
-                shouldAttach
-            );
+            deferredImpacts.Add(new DeferredSawImpact
+            {
+                ZombieInstanceID = targetID,
+                ShouldAttach = shouldAttach,
+                Position = transform.position,
+                Rotation = transform.rotation,
+                Scale = transform.lossyScale
+            });
+        }
+
+        private void ProcessDeferredImpacts()
+        {
+            // Process a snapshot from the next managed Update. We intentionally
+            // keep this method small: no Board.Update hook, no verification
+            // state machine and no source re-resolution across native lists.
+            for (int index = deferredImpacts.Count - 1;
+                 index >= 0;
+                 index--)
+            {
+                DeferredSawImpact pending = deferredImpacts[index];
+                Zombie? target =
+                    V11PlantsBootstrap.FindLiveZombieForAttachedSaw(
+                        pending.ZombieInstanceID
+                    );
+
+                deferredImpacts.RemoveAt(index);
+
+                if (target == null)
+                {
+                    if (pending.ShouldAttach)
+                        ResumeAfterCancelledAttachment();
+                    continue;
+                }
+
+                int impactDamage = GetImpactDamage();
+
+                try
+                {
+                    ApplyDeferredImpactDamage(target);
+                }
+                catch (Exception exception)
+                {
+                    Plugin.Logger.LogWarning(
+                        "[Not-a-pea] Deferred impact failed safely: " +
+                        exception.Message
+                    );
+
+                    if (pending.ShouldAttach)
+                        ResumeAfterCancelledAttachment();
+                    continue;
+                }
+
+                if (!pending.ShouldAttach)
+                {
+                    CompleteTraversalImpact();
+                    continue;
+                }
+
+                int attachedDamage = Mathf.Max(
+                    1,
+                    impactDamage / AttachedDamageDivisor
+                );
+
+                bool spawned =
+                    V11PlantsBootstrap.SpawnAttachedSawRuntime(
+                        pending.Position,
+                        pending.Rotation,
+                        pending.Scale,
+                        target,
+                        attachedDamage
+                    );
+
+                if (!spawned)
+                {
+                    Plugin.Logger.LogWarning(
+                        "[Not-a-pea] Attached visual unavailable; " +
+                        "impact kept but attachment cancelled safely."
+                    );
+                }
+
+                // Whether the visual was available or not, the attach roll
+                // consumes this projectile exactly like the original mechanic.
+                deferredImpacts.Clear();
+                RetireNativeProjectileSafely();
+                return;
+            }
         }
 
         internal int GetImpactDamage()
@@ -3058,6 +3283,7 @@ namespace PlantsPlus.Plants
             attachmentLocked = false;
             motionStored = false;
             hitZombieIDs.Clear();
+            deferredImpacts.Clear();
             CacheNativeComponents();
         }
 
@@ -3100,6 +3326,104 @@ namespace PlantsPlus.Plants
             }
 
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Small per-attachment runtime used instead of the old global
+    /// Board.Update attachment manager. Keeping this state local avoids the
+    /// MonoMod/Il2CppInterop fatal CLR compile path seen in beta.12.1.
+    /// </summary>
+    public sealed class AttachedSawRuntime : MonoBehaviour
+    {
+        private int targetInstanceID;
+        private int damage;
+        private Vector3 visualOffset;
+        private float elapsed;
+        private float nextTick;
+        private bool initialized;
+
+        public AttachedSawRuntime(IntPtr pointer) : base(pointer) { }
+
+        internal void Initialize(
+            int targetID,
+            int tickDamage,
+            Vector3 offset
+        )
+        {
+            targetInstanceID = targetID;
+            damage = Mathf.Max(1, tickDamage);
+            visualOffset = offset;
+            elapsed = 0f;
+            nextTick = NotAPeaProjectile.DamageTickInterval;
+            initialized = true;
+        }
+
+        public void Update()
+        {
+            if (!initialized)
+                return;
+
+            float delta = Time.deltaTime;
+            if (delta <= 0f)
+                return;
+
+            elapsed += delta;
+
+            Zombie? target =
+                V11PlantsBootstrap.FindLiveZombieForAttachedSaw(
+                    targetInstanceID
+                );
+
+            if (target == null)
+            {
+                UnityEngine.Object.Destroy(gameObject);
+                return;
+            }
+
+            try
+            {
+                transform.position =
+                    target.transform.position + visualOffset;
+                transform.Rotate(
+                    0f,
+                    0f,
+                    540f * delta,
+                    Space.Self
+                );
+            }
+            catch
+            {
+                UnityEngine.Object.Destroy(gameObject);
+                return;
+            }
+
+            while (elapsed >= nextTick &&
+                   nextTick <= NotAPeaProjectile.AttachmentDuration)
+            {
+                try
+                {
+                    target.ApplyDamage(
+                        DamageType.Normal,
+                        damage
+                    );
+                }
+                catch (Exception exception)
+                {
+                    Plugin.Logger.LogWarning(
+                        "[Not-a-pea] Attached tick failed safely: " +
+                        exception.Message
+                    );
+                    UnityEngine.Object.Destroy(gameObject);
+                    return;
+                }
+
+                nextTick +=
+                    NotAPeaProjectile.DamageTickInterval;
+            }
+
+            if (elapsed >= NotAPeaProjectile.AttachmentDuration)
+                UnityEngine.Object.Destroy(gameObject);
         }
     }
 

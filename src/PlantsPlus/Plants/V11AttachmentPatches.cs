@@ -6,9 +6,13 @@ using UnityEngine;
 namespace PlantsPlus.Plants
 {
     /// <summary>
-    /// Drives saw impacts and attached-saw timers from Board.Update. The custom
-    /// visual projectile now uses a native Bullet_pea plus a companion
-    /// controller, so pooled bullets never contain a managed Bullet subclass.
+    /// Collision hook for Not-a-pea saw projectiles.
+    ///
+    /// IMPORTANT (beta.12.2): attached-saw ticking no longer runs from
+    /// Board.Update. The previous global manager could trigger a fatal CLR
+    /// failure inside MonoMod/Il2CppInterop while JIT-compiling the large
+    /// TickAttachedSaws method. Each projectile and attached visual now owns
+    /// its own tiny Update loop instead.
     /// </summary>
     [HarmonyPatch]
     internal static class V11AttachmentPatches
@@ -32,42 +36,10 @@ namespace PlantsPlus.Plants
 
             controller.HandleCollision(collision);
 
-            // Suppress Bullet's native one-hit collision only for the saw.
-            // Movement and off-board cleanup remain owned by native Bullet_pea.
+            // Suppress native one-hit collision only for the saw projectile.
+            // The companion controller defers damage by one frame, outside
+            // the native physics callback, and keeps traversal bookkeeping.
             return false;
-        }
-
-        [HarmonyPatch(typeof(Board), nameof(Board.Update))]
-        [HarmonyPostfix]
-        [HarmonyPriority(Priority.Last)]
-        private static void BoardUpdatePostfix()
-        {
-            try
-            {
-                V11PlantsBootstrap.TickAttachedSaws();
-            }
-            catch (System.Exception exception)
-            {
-                Plugin.Logger.LogWarning(
-                    "[Not-a-pea] Attachment manager frame skipped safely: " +
-                    exception.Message
-                );
-            }
-        }
-
-        [HarmonyPatch(typeof(Board), nameof(Board.OnDestroy))]
-        [HarmonyPrefix]
-        [HarmonyPriority(Priority.First)]
-        private static void BoardDestroyPrefix()
-        {
-            try
-            {
-                V11PlantsBootstrap.ClearAttachedSaws();
-            }
-            catch
-            {
-                // The native board is already being destroyed.
-            }
         }
     }
 }

@@ -36,6 +36,7 @@ namespace PlantsPlus.Plants
         private static bool plantDataMirrorLogged;
         private static bool prefabBridgeLogged;
         private static bool nativeRecoveryLogged;
+        private static bool runtimeBridgeWarningLogged;
         private int storedSun;
         private int capturedThisCycle;
         private bool naturalSunCreatedThisCycle;
@@ -60,7 +61,21 @@ namespace PlantsPlus.Plants
                 return;
             }
 
-            EnsureRuntimeReferences(plant);
+            try
+            {
+                EnsureRuntimeReferences(plant);
+            }
+            catch (Exception exception)
+            {
+                if (!runtimeBridgeWarningLogged)
+                {
+                    runtimeBridgeWarningLogged = true;
+                    Plugin.Logger.LogWarning(
+                        "[Inferno Torchflower] Runtime reference bridge " +
+                        "deferred safely: " + exception.Message
+                    );
+                }
+            }
 
             plant.attributeCount = Mathf.Clamp(
                 plant.attributeCount,
@@ -983,8 +998,12 @@ namespace PlantsPlus.Plants
             [HarmonyPriority(Priority.Last)]
             private static void Postfix()
             {
+                // LoadResources fires before a board/scene exists. Mirroring
+                // PlantData is safe here, but touching the registered prefab's
+                // runtime Entity references is not (3.8.1 can hand us partial
+                // IL2CPP wrappers and throw a NullReferenceException). Every
+                // placed Inferno Torchflower repairs its references in Start.
                 RefreshNativePlantData();
-                ConfigureRegisteredPrefab();
             }
         }
 

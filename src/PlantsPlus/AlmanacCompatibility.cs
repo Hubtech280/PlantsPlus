@@ -33,8 +33,58 @@ namespace PlantsPlus.Core
             (PlantType)PlantsPlus.Plants.LogicBlover.LogicBloverID,
             (PlantType)PlantsPlus.Plants.SolarSharpshooter.SolarSharpshooterID,
             (PlantType)PlantsPlus.Plants.SeaBallista.SeaBallistaID,
+            (PlantType)PlantsPlus.Plants.Pineshooter.PineshooterID,
+            (PlantType)PlantsPlus.Plants.Icytronion.IcytronionID,
+            (PlantType)PlantsPlus.Plants.SeaSharpshooter.SeaSharpshooterID,
+            (PlantType)PlantsPlus.Plants.CherryStarBomber.CherryStarBomberID,
+            (PlantType)PlantsPlus.Plants.ThreeBuckpeater.ThreeBuckpeaterID,
+            (PlantType)PlantsPlus.Plants.SakuraSharpshooter.SakuraSharpshooterID,
+            (PlantType)PlantsPlus.Plants.BomberDrone.BomberDroneID,
+            (PlantType)PlantsPlus.Plants.FrostbiteDrone.ID,
+            (PlantType)PlantsPlus.Plants.IceLordCactus.IceLordCactusID,
+            (PlantType)PlantsPlus.Plants.ScoviliaPepper.ScoviliaPepperID,
+            (PlantType)PlantsPlus.Plants.AtomrayShroom.AtomrayShroomID,
+            (PlantType)PlantsPlus.Plants.SauerkrautPult.SauerkrautPultID,
+            (PlantType)PlantsPlus.Plants.CherryCabbage.ID,
+            (PlantType)PlantsPlus.Plants.LobShroom.ID,
 #if ENABLE_MAGNETOPEA
             (PlantType)PlantsPlus.Plants.MagnetOPea.MagnetOPeaID,
+#endif
+        };
+
+        private static readonly AlmanacEntry[] PlantsPlusEntries =
+        {
+            AlmanacContent.LotusPumpkin,
+            AlmanacContent.Bambnut,
+            AlmanacContent.IcebergShroom,
+            AlmanacContent.WitchfirePumpkin,
+            AlmanacContent.NuttySharpshooter,
+            AlmanacContent.InfernoTorchflower,
+            AlmanacContent.PumpkinPodbomber,
+            AlmanacContent.NotAPea,
+            AlmanacContent.NotAStormCommando,
+            AlmanacContent.FrostFurflower,
+            AlmanacContent.Doomtronion,
+            AlmanacContent.LichenPea,
+            AlmanacContent.LogicBlover,
+            AlmanacContent.SolarSharpshooter,
+            AlmanacContent.SeaBallista,
+            AlmanacContent.Pineshooter,
+            AlmanacContent.Icytronion,
+            AlmanacContent.SeaSharpshooter,
+            AlmanacContent.CherryStarBomber,
+            AlmanacContent.ThreeBuckpeater,
+            AlmanacContent.SakuraSharpshooter,
+            AlmanacContent.BomberDrone,
+            AlmanacContent.FrostbiteDrone,
+            AlmanacContent.IceLordCactus,
+            AlmanacContent.ScoviliaPepper,
+            AlmanacContent.AtomrayShroom,
+            AlmanacContent.SauerkrautPult,
+            AlmanacContent.CherryCabbage,
+            AlmanacContent.LobShroom,
+#if ENABLE_MAGNETOPEA
+            AlmanacContent.MagnetOPea,
 #endif
         };
 
@@ -50,6 +100,7 @@ namespace PlantsPlus.Core
                 for (int index = 0; index < PlantsPlusTypes.Length; index++)
                 {
                     PlantType type = PlantsPlusTypes[index];
+                    AlmanacEntry entry = PlantsPlusEntries[index];
 
                     if (!CustomCore.PlantsAlmanac.ContainsKey(type) ||
                         !AlmanacDataLoader.plantDatas.ContainsKey(type))
@@ -63,23 +114,17 @@ namespace PlantsPlus.Core
                     if (target == null)
                         continue;
 
-                    string cleanName = Regex.Replace(
-                        source.name ?? string.Empty,
-                        "\\([^()]*\\)",
-                        string.Empty
-                    ).TrimEnd();
-
                     // The native title concatenates name + "(ID)" directly.
                     // One trailing space reproduces vanilla's "Name (ID)".
-                    target.name = cleanName + " ";
-                    target.info = source.info ?? string.Empty;
-                    target.introduce = source.introduce ?? string.Empty;
-                    // Native PvZ Fusion plant entries do not append the seed
-                    // cost to the Almanac description. The card still keeps
-                    // its real gameplay cost in PlantData.
-                    source.cost = string.Empty;
+                    source.name = entry.Name;
+                    source.info = entry.Info;
+                    source.introduce = entry.Introduce;
+                    source.cost = entry.Cost;
+                    target.name = entry.Name + " ";
+                    target.info = entry.Info;
+                    target.introduce = entry.Introduce;
+                    target.cost = entry.Cost;
                     CustomCore.PlantsAlmanac[type] = source;
-                    target.cost = string.Empty;
                     target.seedType = (int)type;
                     refreshed++;
                 }

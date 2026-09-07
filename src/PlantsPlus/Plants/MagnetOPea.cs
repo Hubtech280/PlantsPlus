@@ -1730,17 +1730,6 @@ namespace PlantsPlus.Plants
             }
         }
 
-        [HarmonyPatch(typeof(GameAPP), nameof(GameAPP.LoadResources))]
-        private static class GameAPP_LoadResources_Patch
-        {
-            [HarmonyPostfix]
-            [HarmonyPriority(Priority.Last)]
-            private static void Postfix()
-            {
-                TryResolveNativeProjectileVisuals();
-            }
-        }
-
         [HarmonyPatch(typeof(KirovBomb), nameof(KirovBomb.Update))]
         private static class KirovBomb_VisualDiscovery_Patch
         {

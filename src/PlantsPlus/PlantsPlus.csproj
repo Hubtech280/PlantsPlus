@@ -12,9 +12,9 @@
     <DebugSymbols>false</DebugSymbols>
     <DebugType>None</DebugType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <Version>1.1.1</Version>
-    <AssemblyVersion>1.1.1.13</AssemblyVersion>
-    <FileVersion>1.1.1.13</FileVersion>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.21</AssemblyVersion>
+    <FileVersion>1.2.0.21</FileVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>../build/</OutputPath>
@@ -31,6 +31,10 @@
 
   <ItemGroup>
     <!-- Magnet-o-pea is enabled for the beta; set EnableMagnetOPea=false for a fallback build. -->
+    <EmbeddedResource Include="Resources/AssetBundles/cherry_cabbage" LogicalName="PlantsPlus.Resources.AssetBundles.cherry_cabbage" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_cherrycabbage" LogicalName="PlantsPlus.Resources.AssetBundles.bullet_cherrycabbage" />
+    <EmbeddedResource Include="Resources/AssetBundles/lob_shroom" LogicalName="PlantsPlus.Resources.AssetBundles.lob_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/nightroofmap" LogicalName="PlantsPlus.Resources.AssetBundles.nightroofmap" />
     <Compile Remove="Plants/MagnetOPea.cs" Condition="'$(EnableMagnetOPea)' != 'true'" />
 
     <EmbeddedResource Include="Resources/AssetBundles/bambnut"
@@ -65,8 +69,8 @@
                       LogicalName="PlantsPlus.Resources.Sprites.doomtronion_biu.png" />
     <EmbeddedResource Include="Resources/Sprites/night_roof_card.png"
                       LogicalName="PlantsPlus.Resources.Sprites.night_roof_card.png" />
-    <EmbeddedResource Include="Resources/Sprites/plants_v1_1_logo.png"
-                      LogicalName="PlantsPlus.Resources.Sprites.plants_v1_1_logo.png" />
+    <EmbeddedResource Include="Resources/Sprites/plants_v1_2_logo.png"
+                      LogicalName="PlantsPlus.Resources.Sprites.plants_v1_2_logo.png" />
     <EmbeddedResource Include="Resources/Sprites/EditorMaps/*.png" />
     <EmbeddedResource Include="Resources/AssetBundles/lichenpea"
                       LogicalName="PlantsPlus.Resources.AssetBundles.lichenpea" />
@@ -86,6 +90,34 @@
                       LogicalName="PlantsPlus.Resources.AssetBundles.bullet_pineshooter" />
     <EmbeddedResource Include="Resources/AssetBundles/icytronion"
                       LogicalName="PlantsPlus.Resources.AssetBundles.icytronion" />
+    <EmbeddedResource Include="Resources/AssetBundles/seasharpshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.seasharpshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_seasharpshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_seasharpshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/cherrystarbomber"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.cherrystarbomber" />
+    <EmbeddedResource Include="Resources/AssetBundles/three_buckpeater"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.three_buckpeater" />
+    <EmbeddedResource Include="Resources/AssetBundles/sakurasharpshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.sakurasharpshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/bullet_sakurasharpshooter"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bullet_sakurasharpshooter" />
+    <EmbeddedResource Include="Resources/AssetBundles/boreal_orchid"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.boreal_orchid" />
+    <EmbeddedResource Include="Resources/AssetBundles/bomberdrone"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bomberdrone" />
+    <EmbeddedResource Include="Resources/AssetBundles/frostbitedrone"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.frostbitedrone" />
+    <EmbeddedResource Include="Resources/AssetBundles/ice_lord_cactus"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.ice_lord_cactus" />
+    <EmbeddedResource Include="Resources/AssetBundles/scoviliapepper"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.scoviliapepper" />
+    <EmbeddedResource Include="Resources/AssetBundles/atomray_shroom"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.atomray_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/sauerkraut_pult"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.sauerkraut_pult" />
+    <EmbeddedResource Include="Resources/AssetBundles/sauerkraut_pult_bullet"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.sauerkraut_pult_bullet" />
     <EmbeddedResource Include="Resources/AssetBundles/bullet_lichenpea"
                       LogicalName="PlantsPlus.Resources.AssetBundles.bullet_lichenpea" />
     <EmbeddedResource Include="Resources/AssetBundles/bullet_notapea"
@@ -114,6 +146,7 @@
     <Reference Include="UnityEngine.CoreModule" HintPath="$(Il2CppRefs)/UnityEngine.CoreModule.dll" Private="false" />
     <Reference Include="UnityEngine.ImageConversionModule" HintPath="$(Il2CppRefs)/UnityEngine.ImageConversionModule.dll" Private="false" />
     <Reference Include="UnityEngine.Physics2DModule" HintPath="$(Il2CppRefs)/UnityEngine.Physics2DModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(Il2CppRefs)/UnityEngine.ParticleSystemModule.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(Il2CppRefs)/UnityEngine.UIModule.dll" Private="false" />
     <Reference Include="Unity.TextMeshPro" HintPath="$(Il2CppRefs)/Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Il2CppRefs)/UnityEngine.UI.dll" Private="false" />

@@ -1,26 +1,16 @@
 # Plants+
 
-<<<<<<< Updated upstream
-**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8.1**. Version **1.1.1** contains twenty custom plants, original mechanics, Almanac entries, fusion and conversion recipes, custom prefabs, Odyssey support, editor improvements and new menu presentation.
+**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8.1**.
 
-> MelonLoader build string: `1.1.1-ml.13`
-
-![Plants+ v1.1 logo](src/PlantsPlus/Resources/Sprites/plants_v1_1_logo.png)
-=======
-**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.8.1**. Version **1.2.0** contains **32 custom plants**, original mechanics, Almanac entries, fusion and conversion recipes, custom prefabs, Odyssey support, Super Level Editor+ additions and custom menu presentation.
+Version **1.2.0** includes **32 custom plants**, original mechanics, Almanac entries, fusion and conversion recipes, custom effects and projectiles, Odyssey content, Super Level Editor+ additions, and custom menu presentation.
 
 ![Plants+ v1.2 logo](src/PlantsPlus/Resources/Sprites/plants_v1_2_logo.png)
->>>>>>> Stashed changes
 
 ## Requirements
 
 - Plants vs. Zombies Fusion **3.8.1**
 - MelonLoader **0.7.3**
-<<<<<<< Updated upstream
-- **CustomizeLib.MelonLoader 3.8.1-ml.1** (`CustomizeLib.MelonLoader.dll`)
-=======
 - **CustomizeLib.MelonLoader 3.8.1**
->>>>>>> Stashed changes
 
 ## Plants included
 
@@ -51,48 +41,41 @@
 | 6022 | Three-Buckpeater | Basic Fusion | Threepeater + Bucket |
 | 6023 | Sakura Sharpshooter | Basic Fusion | Cherry Bomb + Spruce Sharpshooter |
 | 6025 | Bomber Drone | Basic Fusion | Cherryshooter + Blover |
-| 6031 | Frostbite Drone | Basic Fusion | Snow Pea + Blover |
 | 6026 | Ice-Lord Cactus | Odyssey | Ice Cactus + Iceberg-shroom |
 | 6027 | Scovilia Pepper | Basic Fusion | Jalapeno + Jalapeno |
-| 6028 | Atomray-shroom | Odyssey | Plantern ↔ Fume-shroom |
+| 6028 | Atomray-shroom | Odyssey | Plantern + Fume-shroom |
 | 6029 | Sauerkraut-pult | Odyssey | Garbage-pult + Pepper Popper |
 | 6030 | Cherry Cabbage | Basic Fusion | Cherry Bomb + Cabbage-pult |
-| 6032 | Lob-shroom | Basic Fusion | Custom / stackable spore lobber |
+| 6031 | Frostbite Drone | Basic Fusion | Snow Pea + Blover |
+| 6032 | Lob-shroom | Basic Fusion | Stackable spore lobber |
 
-ID **6024** is reserved for **Boreal Orchid**, which was delayed and is not part of v1.2.0.
+> **Boreal Orchid (ID 6024) is delayed and is not included in Plants+ 1.2.0.**
 
-## Highlights in v1.2
+## What's new in v1.2
 
-- Twelve new plants, from Sea Sharpshooter through Lob-shroom.
-- Sea Sharpshooter grows through three stronger aquatic stages.
-- Cherry StarBomber launches two explosive Cherry Star volleys and supports Odyssey modifiers.
-- Three-Buckpeater attacks three lanes with iron peas.
-- Sakura Sharpshooter combines explosive thorns with Explode-o-shooter chain reactions.
-- Bomber Drone and Frostbite Drone add two hovering support shooters.
-- Ice-Lord Cactus changes its attack against ground and airborne zombies.
-- Scovilia Pepper burns three lanes at once.
-- Atomray-shroom mixes a slowing ray with Demise-shroom effects.
-- Sauerkraut-pult changes attack mode based on zombie distance.
-- Cherry Cabbage becomes more dangerous as zombies approach the house.
-- Lob-shroom is a stackable arcing spore shooter.
-- Night Roof is available in Super Level Editor+.
-- New v1.2 main-menu logo and in-game changelog.
+Plants+ 1.2 adds **12 new plants**, bringing the total to **32**.
+
+- **Sea Sharpshooter** grows through three stronger aquatic stages.
+- **Cherry StarBomber** launches two rapid volleys of explosive Cherry Stars.
+- **Three-Buckpeater** attacks three lanes with iron peas.
+- **Sakura Sharpshooter** fires explosive thorns and can react with nearby Explode-o-shooter blasts.
+- **Bomber Drone** and **Frostbite Drone** add two hovering shooters.
+- **Ice-Lord Cactus** changes its attack depending on its target.
+- **Scovilia Pepper** attacks across three lanes.
+- **Atomray-shroom** fires a slowing ray with additional effects.
+- **Sauerkraut-pult** changes its attack depending on zombie distance.
+- **Cherry Cabbage** becomes more dangerous as zombies advance.
+- **Lob-shroom** is a stackable spore lobber.
+- **Night Roof** is available in Super Level Editor+.
+- New **Plants+ v1.2 logo** and updated in-game changelog.
 
 ## Installation
 
-<<<<<<< Updated upstream
-1. Install MelonLoader 0.7.3 for PVZ Fusion 3.8.1.
-2. Put `CustomizeLib.MelonLoader.dll` in the game's `Mods` folder.
-3. Remove older copies of `PlantsPlus.dll`.
-4. Put `PlantsPlus.dll` from the GitHub release in the game's `Mods` folder.
-5. Start the game and look for `Plants+ 1.1.1-ml.13 loaded!` in the MelonLoader log.
-=======
 1. Install MelonLoader for PvZ Fusion 3.8.1.
 2. Put `CustomizeLib.MelonLoader.dll` in the game's `Mods` folder.
 3. Remove older copies of `PlantsPlus.dll`.
-4. Put the v1.2 `PlantsPlus.dll` in the game's `Mods` folder.
+4. Put the Plants+ 1.2.0 `PlantsPlus.dll` in the game's `Mods` folder.
 5. Start the game and check that `Plants+ 1.2.0 loaded!` appears in the MelonLoader log.
->>>>>>> Stashed changes
 
 ## Documentation
 
@@ -103,23 +86,21 @@ ID **6024** is reserved for **Boreal Orchid**, which was delayed and is not part
 
 ## Building
 
-The project targets `.NET 6` and references the assemblies generated by MelonLoader. Game assemblies and CustomizeLib are not redistributed in this repository.
+The project targets `.NET 6` and references the assemblies generated by MelonLoader.
+
+Game assemblies and CustomizeLib are not redistributed in this repository.
 
 ## Reporting bugs
 
-Open an issue and attach the complete MelonLoader log. Include the plant, recipe and steps that produced the problem.
+Open an issue and attach the complete MelonLoader log. Include the plant, recipe, and the steps that produced the problem.
 
 ## Credits
 
 - Mod creator and plant concepts: **Auro**
 - Plant and fusion artwork: **Red Reel** and **Retrosphere**
-<<<<<<< Updated upstream
-- Built for the PvZ Fusion modding community using the MelonLoader port of CustomizeLib
-=======
 - Preview video editing: **Mathys**
 - Built for the PvZ Fusion modding community using CustomizeLib
->>>>>>> Stashed changes
 
 ## Disclaimer
 
-Plants+ is a fan-made, unofficial mod. It is not affiliated with or endorsed by Electronic Arts, PopCap Games or the PvZ Fusion developers. Plants vs. Zombies and related names belong to their respective owners.
+Plants+ is a fan-made, unofficial mod. It is not affiliated with or endorsed by Electronic Arts, PopCap Games, or the PvZ Fusion developers. Plants vs. Zombies and related names belong to their respective owners.

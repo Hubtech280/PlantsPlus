@@ -5,12 +5,19 @@ namespace PlantsPlus.Core
         public string Name { get; }
         public string Info { get; }
         public string Introduce { get; }
+        public string Cost { get; }
 
-        public AlmanacEntry(string name, string info, string introduce)
+        public AlmanacEntry(
+            string name,
+            string info,
+            string introduce,
+            string cost = ""
+        )
         {
             Name = name;
             Info = info;
-            Introduce = introduce;
+            Introduce = "<align=left>" + introduce;
+            Cost = cost;
         }
     }
 
@@ -18,9 +25,10 @@ namespace PlantsPlus.Core
     /// English Almanac copy following PVZ Fusion's native layout:
     /// mechanical information first, character lore in the introduce field.
     /// </summary>
-    internal static class AlmanacContent
+    internal static class LegacyAlmanacContent
     {
-        private const string BrownOpen = "<color=#3D1400>";
+        private const string BrownOpen = "<color=black>";
+        private const string UsageOpen = "<color=#4A2900>";
         private const string RedOpen = "<color=#8B0000>";
         private const string Close = "</color>";
 
@@ -34,6 +42,11 @@ namespace PlantsPlus.Core
             return RedOpen + text + Close;
         }
 
+        private static string Usage(string text)
+        {
+            return UsageOpen + text + Close;
+        }
+
         private static string Stat(string label, string value)
         {
             return Brown(label + ": ") + Red(value);
@@ -41,7 +54,7 @@ namespace PlantsPlus.Core
 
         private static string Bullet(string text)
         {
-            return Red("\u2022 " + text);
+            return Red("<color=black>\u2022</color> " + text);
         }
 
         private static string LoreWithRecipe(string lore, string recipe)
@@ -56,7 +69,18 @@ namespace PlantsPlus.Core
         )
         {
             return Brown(lore) + "\n\n" +
-                Brown("Conversion Recipe: ") + Red(recipe);
+                Brown("Conversion Formula: ") + Red(recipe);
+        }
+
+        private static string LoreWithAltRecipe(
+            string lore,
+            string recipe,
+            string conversion
+        )
+        {
+            return Brown(lore) + "\n\n" +
+                Brown("Fusion Recipe: ") + Red(recipe) + "\n" +
+                Brown("Conversion Formula: ") + Red(conversion);
         }
 
         public static readonly AlmanacEntry LotusPumpkin = new AlmanacEntry(
@@ -82,7 +106,7 @@ namespace PlantsPlus.Core
                 "arranged, every crack in her shell carefully ignored, and " +
                 "a reserve of cool lotus energy ready for anyone who needs " +
                 "it more than she does.",
-                "Pumpkin > Snow Lotus"
+                "Pumpkin + Snow Lotus"
             )
         );
 
@@ -104,7 +128,7 @@ namespace PlantsPlus.Core
                 "perfectly still, looking extremely serious, and waiting " +
                 "for the problem to run into him. Zombies keep proving that " +
                 "the technique works.",
-                "Bamboo > Wall-nut"
+                "Bamboo + Wall-nut"
             )
         );
 
@@ -129,7 +153,7 @@ namespace PlantsPlus.Core
                 "Iceberg-shroom. The chattering teeth, frozen puddle, and " +
                 "mountain of ice above his head are, according to him, " +
                 "purely decorative.",
-                "Ice-shroom > Ice-shroom"
+                "Ice-shroom + Ice-shroom"
             )
         );
 
@@ -140,7 +164,7 @@ namespace PlantsPlus.Core
                 "sacrifices them for overwhelming damage and energy once " +
                 "ignited."
             ) + "\n\n" +
-            Brown("Usage Conditions: ") + Red("Odyssey Mode") + "\n" +
+            Usage("Usage Conditions: Odyssey Mode") + "\n" +
             Stat("Toughness", "4000") + "\n" +
             Brown("Special:") + "\n" +
             Bullet(
@@ -196,7 +220,7 @@ namespace PlantsPlus.Core
                 "eating people or plants, but definitely eating zombies. " +
                 "Witchfire Pumpkin also enjoys the scent of lavender and " +
                 "jasmine.\"",
-                "Pyro Pumpkin > Doom Pumpkin"
+                "Pyro Pumpkin + Doom Pumpkin"
             )
         );
 
@@ -227,7 +251,7 @@ namespace PlantsPlus.Core
                     "around his roots improves stability; everyone else " +
                     "suspects he simply likes having somewhere to store " +
                     "spare needles.",
-                    "Spruce Sharpshooter > Wall-nut"
+                    "Spruce Sharpshooter + Wall-nut"
                 )
             );
 
@@ -307,6 +331,46 @@ namespace PlantsPlus.Core
                 )
             );
 
+        public static readonly AlmanacEntry CherryStarBomber =
+            new AlmanacEntry(
+                "Cherry StarBomber",
+                Brown(
+                    "Cherry StarBomber fires Cherry Stars in every useful " +
+                    "direction, then immediately repeats the whole burst."
+                ) + "\n\n" +
+                Stat("Damage", "300 x 10 / 1.5s") + "\n" +
+                Usage("Usage Conditions: Odyssey Mode | Epic Odyssey") +
+                "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Each attack consists of two consecutive volleys of " +
+                    "five Cherry Stars."
+                ) + "\n" +
+                Bullet(
+                    "Uses the same Cherry Star projectiles created when " +
+                    "Gatling Cherrybomber's shots pass through Inferno " +
+                    "Starwood."
+                ) + "\n" +
+                Bullet(
+                    "The five stars travel forward, backward, upward, " +
+                    "downward, and diagonally to cover the lawn."
+                ) + "\n" +
+                Brown("Odyssey Modifiers:") + "\n" +
+                Bullet(
+                    "Guided Constellation: Cherry Stars home in on zombies."
+                ) + "\n" +
+                Bullet(
+                    "Stellar Momentum: after traveling 3 tiles, Cherry " +
+                    "Stars grow slightly and deal x2 damage."
+                ),
+                LoreWithConversionRecipe(
+                    "Cherry StarBomber insists that ten stars per attack " +
+                    "is not excessive. It is simply a complete tactical " +
+                    "constellation, delivered twice for certainty.",
+                    "Starfruit <-> Peashooter"
+                )
+            );
+
         public static readonly AlmanacEntry NotAPea =
             new AlmanacEntry(
                 "Not-a-pea",
@@ -332,7 +396,7 @@ namespace PlantsPlus.Core
                     "pretending to be a saw or a saw pretending to be a " +
                     "pea. He filed the question under \"things to cut " +
                     "short\" and shredded the entire folder.",
-                    "Saw-me-not > Peashooter"
+                    "Saw-me-not + Peashooter"
                 )
             );
 
@@ -344,7 +408,7 @@ namespace PlantsPlus.Core
                     "entire firing pattern with a storm of persistent " +
                     "saw-peas."
                 ) + "\n\n" +
-                Brown("Usage Conditions: ") + Red("Odyssey Mode") + "\n" +
+                Usage("Usage Conditions: Odyssey Mode") + "\n" +
                 Stat("Projectile Damage", "20 each") + "\n" +
                 Stat("Attached Damage", "10 / 1.5s for 10s") + "\n" +
                 Stat("Attack Pattern", "Pea-storm Commando's volley") +
@@ -377,7 +441,7 @@ namespace PlantsPlus.Core
                     "because every briefing ends with six smoking barrels, " +
                     "a pile of sawdust, and nobody brave enough to ask a " +
                     "follow-up question.",
-                    "Saw-me-not > Pea-storm Commando"
+                    "Saw-me-not + Pea-storm Commando"
                 )
             );
 
@@ -407,7 +471,7 @@ namespace PlantsPlus.Core
                     "unannounced cryogenic experiment. Both sides agree the " +
                     "Sun is excellent; negotiations concerning the frozen " +
                     "petals are still ongoing.",
-                    "Hoarfrost Lichen > Sunflower"
+                    "Hoarfrost Lichen + Sunflower"
                 )
             );
 
@@ -450,7 +514,7 @@ namespace PlantsPlus.Core
                     "and asks everyone to stop measuring it. The Geiger " +
                     "counter has declined to comment because it has been " +
                     "screaming continuously since breakfast.",
-                    "Amp-nion > Doom-shroom"
+                    "Amp-nion + Doom-shroom"
                 )
             );
 
@@ -482,7 +546,7 @@ namespace PlantsPlus.Core
                     "that freezing his own teammates builds character. His " +
                     "teammates are currently drafting a strongly worded " +
                     "response.",
-                    "Hoarfrost Lichen > Peashooter"
+                    "Hoarfrost Lichen + Peashooter"
                 )
             );
 
@@ -493,7 +557,7 @@ namespace PlantsPlus.Core
                     "Logic Blover considers every outcome before choosing " +
                     "one at random. Somehow, this makes perfect sense to him."
                 ) + "\n\n" +
-                Brown("Usage Condition: ") + Red("Harvest Mode") + "\n" +
+                Usage("Usage Condition: Harvest Mode") + "\n" +
                 Stat("Toughness", "300") + "\n" +
                 Brown("Special:") + "\n" +
                 Bullet(
@@ -544,7 +608,7 @@ namespace PlantsPlus.Core
                     "Solar Sharpshooter never misses an opportunity to make " +
                     "hay while the sun shines. The zombies object to being " +
                     "classified as an opportunity.",
-                    "Spruce Sharpshooter > Sunflower"
+                    "Spruce Sharpshooter + Sunflower"
                 )
             );
 
@@ -570,7 +634,57 @@ namespace PlantsPlus.Core
                     "Sea Ballista claims the tide pulls every bolt back for " +
                     "reuse. Nobody has had the courage to ask why the bolts " +
                     "still explode.",
-                    "Spruce Ballista > Sea-shroom"
+                    "Spruce Ballista + Sea-shroom"
+                )
+            );
+
+        public static readonly AlmanacEntry SeaSharpshooter =
+            new AlmanacEntry(
+                "Sea Sharpshooter",
+                Brown(
+                    "Sea Sharpshooter grows stronger while it remains on " +
+                    "the lawn."
+                ) + "\n\n" +
+                Stat("Damage", "20 > 40 > 60 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Aquatic plant with three growth stages.") + "\n" +
+                Bullet(
+                    "Starts at 65% size, grows to 82%, then reaches its " +
+                    "normal size."
+                ) + "\n" +
+                Bullet(
+                    "Reaches a new stage every 30 seconds, increasing its " +
+                    "projectile damage."
+                ),
+                LoreWithRecipe(
+                    "Sea Sharpshooter insists that growing up underwater " +
+                    "builds character. It also builds considerably sharper " +
+                    "projectiles.",
+                    "Spruce Sharpshooter + Sea-shroom"
+                )
+            );
+
+        public static readonly AlmanacEntry ThreeBuckpeater =
+            new AlmanacEntry(
+                "Three-Buckpeater",
+                Brown(
+                    "Three-Buckpeater fires heavy iron peas into three " +
+                    "lanes at once."
+                ) + "\n\n" +
+                Stat("Damage", "80 / 1.5s per lane") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Attacks its own lane and the adjacent lanes, like a " +
+                    "Threepeater."
+                ) + "\n" +
+                Bullet(
+                    "Iron peas knock zombies backward and instantly break " +
+                    "Type 2 armor."
+                ),
+                LoreWithRecipe(
+                    "Three-Buckpeater never could decide which lane needed " +
+                    "the bucket most, so he picked all three.",
+                    "Threepeater + Bucket"
                 )
             );
 
@@ -595,7 +709,7 @@ namespace PlantsPlus.Core
                     "Pineshooter was told that throwing the whole tree was " +
                     "wasteful. He points out that nobody has volunteered to " +
                     "retrieve one from the zombies.",
-                    "Peashooter > Spruce Sharpshooter"
+                    "Peashooter + Spruce Sharpshooter"
                 )
             );
 
@@ -625,7 +739,162 @@ namespace PlantsPlus.Core
                 LoreWithRecipe(
                     "Icytronion insists that lightning never feels cold. " +
                     "The frozen zombies are currently unable to disagree.",
-                    "Amp-nion > Ice-shroom"
+                    "Amp-nion + Ice-shroom"
+                )
+            );
+
+        public static readonly AlmanacEntry SakuraSharpshooter =
+            new AlmanacEntry(
+                "Sakura Sharpshooter",
+                Brown(
+                    "Sakura Sharpshooter fires blossom-covered thorns and " +
+                    "turns nearby Explode-o-shooter blasts into unstable " +
+                    "chain reactions."
+                ) + "\n\n" +
+                Stat("Damage", "30 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Each thorn has a 15% chance to create a Cherry Bomb " +
+                    "explosion on impact."
+                ) + "\n" +
+                Bullet(
+                    "If an Explode-o-shooter explosion damages a zombie " +
+                    "next to Sakura Sharpshooter, that zombie has a 50% " +
+                    "chance to explode for full Explode-o-shooter damage."
+                ) + "\n" +
+                Bullet(
+                    "When that chain reaction succeeds, one other random " +
+                    "zombie in the surrounding 3x3 also explodes for half " +
+                    "damage (150 with the current 300-damage blast)."
+                ),
+                LoreWithRecipe(
+                    "Sakura Sharpshooter calls the petals decorative. The " +
+                    "zombies stopped believing that after the first petal " +
+                    "set off three explosions at once.",
+                    "Cherry Bomb + Spruce Sharpshooter"
+                )
+            );
+
+        public static readonly AlmanacEntry BorealOrchid =
+            new AlmanacEntry(
+                "Boreal Orchid",
+                Brown(
+                    "Boreal Orchid covers its entire lane with a stationary " +
+                    "Boreal Wave every 35 seconds."
+                ) + "\n\n" +
+                Stat("Toughness", "300") + "\n" +
+                Stat("Boreal Wave", "Every 35s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet(
+                    "Night plants in the lane gain 35% damage, toughness, " +
+                    "attack speed, production speed and movement speed."
+                ) + "\n" +
+                Bullet(
+                    "A plant can receive the numerical Boreal boost only " +
+                    "once; later waves can still activate its special " +
+                    "Boreal effect."
+                ) + "\n" +
+                Bullet(
+                    "Planterns in the lane receive the boost and generate " +
+                    "Boreal Points instead of Lumos Points."
+                ),
+                Brown(
+                    "Boreal Orchid does not ask the night to become " +
+                    "brighter. She simply teaches it how to bloom."
+                )
+            );
+
+        public static readonly AlmanacEntry BomberDrone =
+            new AlmanacEntry(
+                "Bomber Drone",
+                Brown(
+                    "Bomber Drone patrols the lawn from above and fires " +
+                    "cherries that deal twice as much damage."
+                ) + "\n\n" +
+                Stat("Damage", "40 / 1.5s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Hovering plant.") + "\n" +
+                Bullet(
+                    "Fires Cherryshooter projectiles that deal twice as " +
+                    "much damage."
+                ) + "\n" +
+                Bullet(
+                    "If the shooter directly beneath it attacks faster " +
+                    "than once every 1.5 seconds, Bomber Drone synchronizes " +
+                    "its attack rate to match."
+                ),
+                LoreWithRecipe(
+                    "Bomber Drone says the cherries are perfectly safe as " +
+                    "long as nobody asks why the emergency landing button " +
+                    "is bright red.",
+                    "Cherryshooter + Blover"
+                )
+            );
+
+        public static readonly AlmanacEntry IceLordCactus =
+            new AlmanacEntry(
+                "Ice-Lord Cactus",
+                Brown(
+                    "Ice-Lord Cactus commands the cold from the ground " +
+                    "and the sky."
+                ) + "\n\n" +
+                Stat("Ground attack", "20 x3 / 2s") + "\n" +
+                Stat("Air attack", "80 / 1s") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Fires the same projectiles as Ice Cactus.") + "\n" +
+                Bullet("Deals x4 damage to airborne zombies.") + "\n" +
+                Bullet("Freezes normal zombies for 8 seconds.") + "\n" +
+                Bullet(
+                    "Ice-immune zombies cannot be frozen, but are slowed " +
+                    "to 50% movement speed for 8 seconds."
+                ),
+                LoreWithRecipe(
+                    "Ice-Lord Cactus insists the crown is not frozen to " +
+                    "his head. Nobody has been brave enough to check.",
+                    "Ice Cactus + Iceberg-shroom"
+                )
+            );
+
+        public static readonly AlmanacEntry ScoviliaPepper =
+            new AlmanacEntry(
+                "Scovilia Pepper",
+                Brown(
+                    "Scovilia Pepper unleashes Jalapeno fire across three " +
+                    "lanes at once."
+                ) + "\n\n" +
+                Stat("Damage", "Jalapeno damage") + "\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Burns its own lane and both adjacent lanes."),
+                LoreWithRecipe(
+                    "Scovilia Pepper does not measure heat in Scoville " +
+                    "units anymore. The thermometer resigned.",
+                    "Jalapeno + Jalapeno"
+                )
+            );
+
+        public static readonly AlmanacEntry AtomrayShroom =
+            new AlmanacEntry(
+                "Atomray-shroom",
+                Brown(
+                    "Atomray-shroom fires a concentrated ray that slows " +
+                    "zombies."
+                ) + "\n\n" +
+                Brown("Special:") + "\n" +
+                Bullet("Its ray slows struck zombies for 3 seconds.") + "\n" +
+                Bullet(
+                    "Each attack has a 25% chance to create a " +
+                    "Demise-shroom explosion at its target."
+                ) + "\n" +
+                Bullet("Creates a Demise-shroom explosion when it dies.") + "\n" +
+                Bullet(
+                    "Each nearby Atomheart Plantern increases its attack " +
+                    "speed by 25%, down to a minimum interval of 0.5 seconds."
+                ),
+                LoreWithAltRecipe(
+                    "Atomray-shroom says the warning glow is merely a " +
+                    "helpful reminder to stand somewhere else.",
+                    "Atomheart Plantern + Fume-shroom",
+                    "Plantern <-> Fume-shroom"
                 )
             );
 
@@ -667,7 +936,7 @@ namespace PlantsPlus.Core
                 "never pulls metal from a distance; he considers that " +
                 "stealing. Hand him something useful, however, and he will " +
                 "happily turn it into ammunition.",
-                "Magnet-shroom > Peashooter"
+                "Magnet-shroom + Peashooter"
             )
         );
 #endif

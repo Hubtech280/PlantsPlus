@@ -79,3 +79,20 @@ Peashooter > Spruce Sharpshooter. Fires pine trees that knock back the first zom
 ## Icytronion — 6019
 
 Amp-nion > Ice-shroom. Connected electric-family plants increase its damage. Its chain shot slows every target and has a 25% chance to freeze.
+
+
+## Sea Sharpshooter — 6020
+
+Spruce Sharpshooter > Sea-shroom. Aquatic shooter with three growth stages: 20, 40 and then 60 damage.
+
+## Cherry StarBomber — 6021
+
+Epic Odyssey plant that fires two five-star Cherry Star volleys. Its modifiers can add homing and double damage after three tiles.
+
+## Three-Buckpeater — 6022
+
+Threepeater > Bucket. Fires in three lanes for 80 damage per lane, knocks zombies back and breaks type-2 armor.
+
+## Sakura Sharpshooter — 6023
+
+Cherry Bomb + Spruce Sharpshooter. Fires 30-damage thorns. Each projectile has a 15% chance to trigger a 300-damage Cherry Bomb explosion. If an Explode-o-shooter explosion damages a zombie adjacent to Sakura Sharpshooter, that zombie has a 50% chance to chain-explode for full damage; another random zombie in the surrounding 3x3 also explodes for half damage, currently 150.
