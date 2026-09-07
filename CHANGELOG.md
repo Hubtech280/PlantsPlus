@@ -1,51 +1,40 @@
 # Changelog
 
-<<<<<<< Updated upstream
-## [1.1.1] - 2026-07-28
-
-Compatibility and quality hotfix for PvZ Fusion 3.8.1 and CustomizeLib.MelonLoader 3.8.1-ml.1.
-
-### Fixed
-
-- Updated Plants+ to the real `CustomizeLib.MelonLoader` assembly and namespace used by PvZ Fusion 3.8.1.
-- Fixed Electronion's locked card in restricted challenge levels, including The Gods: Evolved.
-- Kept Electronion on the second normal-card page without the Peashooter packet, missing preview or duplicate template card.
-- Preserved the normal Adventure card and Carbon Copy behavior.
-- Preserved the animated Plants+ main-menu logo on the updated game build.
-=======
 ## [1.2.0] - 2026-09-06
 
 Third public Plants+ release for PvZ Fusion 3.8.1.
 
 ### Added
 
-- Twelve new custom plants, bringing Plants+ to 32 plants total:
-  - Sea Sharpshooter — an aquatic Sharpshooter that grows through three stronger stages.
-  - Cherry StarBomber — fires two rapid volleys of explosive Cherry Stars.
-  - Three-Buckpeater — attacks three lanes with armor-breaking iron peas.
-  - Sakura Sharpshooter — fires explosive thorns and reacts with nearby Explode-o-shooter blasts.
-  - Bomber Drone — a hovering Cherryshooter-based support shooter.
-  - Frostbite Drone — a hovering Snow Pea-based support shooter.
-  - Ice-Lord Cactus — switches between ground and anti-air attack patterns.
-  - Scovilia Pepper — unleashes Jalapeno fire across three lanes.
-  - Atomray-shroom — fires a slowing ray and can trigger Demise-shroom effects.
-  - Sauerkraut-pult — changes ammunition depending on how close zombies are to the house.
-  - Cherry Cabbage — becomes stronger and more explosive as zombies advance.
-  - Lob-shroom — lobs spores and can share a tile like Puff-shroom.
+- 12 new custom plants, bringing Plants+ to 32 plants total:
+  - Sea Sharpshooter - an aquatic Sharpshooter that grows through three stronger stages.
+  - Cherry StarBomber - fires two rapid volleys of explosive Cherry Stars.
+  - Three-Buckpeater - attacks three lanes with armor-breaking iron peas.
+  - Sakura Sharpshooter - fires explosive thorns and reacts with nearby Explode-o-shooter blasts.
+  - Bomber Drone - a hovering Cherryshooter-based support shooter.
+  - Frostbite Drone - a hovering Snow Pea-based support shooter.
+  - Ice-Lord Cactus - switches between ground and anti-air attack patterns.
+  - Scovilia Pepper - unleashes Jalapeno fire across three lanes.
+  - Atomray-shroom - fires a slowing ray and can trigger Demise-shroom effects.
+  - Sauerkraut-pult - changes ammunition depending on how close zombies are to the house.
+  - Cherry Cabbage - becomes stronger and more explosive as zombies advance.
+  - Lob-shroom - lobs spores and can share a tile like Puff-shroom.
 - New Almanac entries, recipes, projectiles, effects and previews for the v1.2 plants.
 - Night Roof support in Super Level Editor+.
-- New Plants+ v1.2 main-menu logo and updated in-game changelog.
+- New Plants+ v1.2 main-menu logo.
+- Updated in-game Plants+ changelog.
 
-### Changed / polished
+### Changed and polished
 
 - Three-Buckpeater now fires correctly and has its intended shadow.
 - Sakura Sharpshooter's projectile position was corrected.
-- General gameplay, visual and stability polish across Plants+.
+- General gameplay and visual polish across Plants+.
 
 ### Delayed
 
-- Boreal Orchid is **not included in v1.2.0** and will arrive in a later update.
->>>>>>> Stashed changes
+- Boreal Orchid is not included in v1.2.0 and will arrive in a later update.
+
+---
 
 ## [1.1.0] - 2026-07-26
 
@@ -53,7 +42,7 @@ Second public Plants+ release for PvZ Fusion 3.8 and MelonLoader 0.7.3.
 
 ### Added
 
-- Ten new custom plants with IDs 6010-6019:
+- 10 new custom plants with IDs 6010-6019:
   - Not-a-pea
   - Not-a-storm Commando
   - Frost Furflower
@@ -90,13 +79,15 @@ Second public Plants+ release for PvZ Fusion 3.8 and MelonLoader 0.7.3.
 - Electronion card backgrounds, restricted-level availability, Carbon Copy, Almanac and page placement.
 - Multiple custom plant animations, previews, shadows, cards and effect synchronization issues.
 
+---
+
 ## [1.0.0] - 2026-07-17
 
 First public release of Plants+ for PvZ Fusion 3.8 and MelonLoader 0.7.3.
 
 ### Added
 
-- Ten custom plants with IDs 6000-6009.
+- 10 custom plants with IDs 6000-6009.
 - Custom AssetBundles, projectiles, Almanac mechanics and flavor text.
 - Weak-Odyssey registration and the Grenades/Radiation modifiers for Witchfire Pumpkin.
 - Advanced Alt conversion systems for Inferno Torchflower, Pumpkin Podbomber and Ceasarweed.
