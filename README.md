@@ -97,8 +97,7 @@ Open an issue and attach the complete MelonLoader log. Include the plant, recipe
 ## Credits
 
 - Mod creator and plant concepts: **Auro**
-- Plant and fusion artwork: **Red Reel** and **Retrosphere**
-- Preview video editing: **Mathys**
+- Plant and fusion artwork: **Red Reel**, **Retrosphere**, **Aris** and ***Roshade**
 - Built for the PvZ Fusion modding community using CustomizeLib
 
 ## Disclaimer
