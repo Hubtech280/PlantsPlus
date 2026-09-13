@@ -1980,7 +1980,7 @@ namespace PlantsPlus.Plants
                 int boostedDamage,
                 bool applyProtectedEffects,
                 WitchfirePumpkin? killOwner,
-                int healthBefore
+                long healthBefore
             )
             {
                 Source = source;
@@ -1995,7 +1995,7 @@ namespace PlantsPlus.Plants
             public int BoostedDamage { get; }
             public bool Applied { get; }
             public WitchfirePumpkin? KillOwner { get; }
-            public int HealthBefore { get; }
+            public long HealthBefore { get; }
             public bool TracksKill { get; }
         }
 
@@ -2019,7 +2019,7 @@ namespace PlantsPlus.Plants
         private readonly struct ZombieDeathChargeState
         {
             public ZombieDeathChargeState(
-                int healthBefore,
+                long healthBefore,
                 int row,
                 bool irritated,
                 bool enflamed,
@@ -2036,7 +2036,7 @@ namespace PlantsPlus.Plants
                 Active = healthBefore > 0 && (irritated || enflamed);
             }
 
-            public int HealthBefore { get; }
+            public long HealthBefore { get; }
             public int Row { get; }
             public bool Irritated { get; }
             public bool Enflamed { get; }

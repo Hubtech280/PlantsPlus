@@ -1979,7 +1979,7 @@ namespace PlantsPlus.Core
             if (targetRect != null)
             {
                 // InitCards runs before the Almanac layout has fully settled
-                // in PVZ Fusion 3.8.1. Moving Electronion is safe there, but
+                // in the supported PvZ Fusion build. Moving Electronion is safe there, but
                 // querying/rebuilding the scroll hierarchy can dereference
                 // native UI objects that are not ready yet. Resize only from
                 // a later UI action (for example LookUnlocked).
@@ -2570,7 +2570,7 @@ namespace PlantsPlus.Core
             AlmanacPlantMenu __instance
         )
         {
-            // InitCards is too early for scroll/layout measurements in 3.8.1.
+            // InitCards is too early for scroll/layout measurements in the supported game build.
             // Reparent the card now; resize later from LookUnlocked.
             NightRoofCards.RepairAlmanac(
                 __instance,

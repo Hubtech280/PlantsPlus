@@ -305,8 +305,8 @@ namespace PlantsPlus.Plants
 
             bullet.from = source;
             bullet.fromType = (PlantType)SolarSharpshooterID;
-            bullet.hitTimes = 0;
-            bullet.penetrationTimes = PenetrationCount;
+            bullet.hitCount = 0;
+            bullet.maxHitCount = PenetrationCount;
             SolarSharpshooterBootstrap.ApplyProjectileSkin(bullet);
         }
 

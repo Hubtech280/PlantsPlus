@@ -688,8 +688,10 @@ namespace PlantsPlus.Core
             try
             {
                 int grenadesBuff = CustomCore.RegisterCustomBuff(
-                    "Grenades: replaces Witchfire Pumpkin's local Doom " +
-                    "explosion with a Doom Bomb thrown into every lane.",
+                    "<align=center><size=24>[Grenades]</size></align>\n" +
+                    "<align=left><size=20>Replaces Witchfire Pumpkin's " +
+                    "local Doom explosion with a Doom Bomb thrown into " +
+                    "every lane.</size></align>",
                     BuffType.AdvancedBuff,
                     () => true,
                     0,
@@ -701,9 +703,11 @@ namespace PlantsPlus.Core
                 );
 
                 int radiationBuff = CustomCore.RegisterCustomBuff(
-                    "Radiation: deals 100 damage every 0.2 seconds in a " +
-                    "1x1 area. Damage and radius grow whenever Witchfire " +
-                    "Pumpkin or its protected plant kills a zombie.",
+                    "<align=center><size=24>[Radiation]</size></align>\n" +
+                    "<align=left><size=20>Deals 100 damage every 0.2 " +
+                    "seconds in a 1x1 area. Damage and radius grow whenever " +
+                    "Witchfire Pumpkin or its protected plant kills a " +
+                    "zombie.</size></align>",
                     BuffType.AdvancedBuff,
                     () => true,
                     0,

@@ -20,30 +20,21 @@ namespace PlantsPlus.Core
             "PlantsPlus.Resources.Sprites.plants_v1_2_logo.png";
 
         private const string ChangelogText =
-            "<align=center><size=135%><b>Plants+ - Update v1.2</b></size></align>\n" +
-            "<align=center><color=#8BEA45>12 new plants. 32 custom plants total.</color></align>\n\n" +
-            "<b>NEW PLANTS</b>\n" +
-            "- Sea Sharpshooter - grows through 3 stronger stages.\n" +
-            "- Cherry StarBomber - two explosive 5-star volleys.\n" +
-            "- Three-Buckpeater - iron peas across 3 lanes.\n" +
-            "- Sakura Sharpshooter - explosive thorns and Explode-o-shooter synergy.\n" +
-            "- Bomber Drone - hovering Cherryshooter support.\n" +
-            "- Frostbite Drone - hovering Snow Pea support.\n" +
-            "- Ice-Lord Cactus - different attacks for ground and air targets.\n" +
-            "- Scovilia Pepper - Jalapeno fire across 3 lanes.\n" +
-            "- Atomray-shroom - slowing ray with Demise-shroom effects.\n" +
-            "- Sauerkraut-pult - changes attacks depending on zombie distance.\n" +
-            "- Cherry Cabbage - gets deadlier as zombies approach the house.\n" +
-            "- Lob-shroom - arcing spore shooter that can stack on Puff-shrooms.\n\n" +
-            "<b>NEW CONTENT</b>\n" +
+            "<align=center><size=135%><b>Plants+ - Update v1.2.1</b></size></align>\n" +
+            "<align=center><color=#8BEA45>PvZ Fusion 3.9 compatibility hotfix</color></align>\n\n" +
+            "<b>V1.2.1 HOTFIX</b>\n" +
+            "- Updated Plants+ for PvZ Fusion 3.9 and CustomizeLib 3.9.\n" +
+            "- Restored projectile, piercing, saw and lobbed-shot behavior affected by 3.9.\n" +
+            "- Updated zombie health handling for the new 3.9 values.\n" +
+            "- Fixed Ice-Lord Cactus anti-air shots.\n" +
+            "- Updated Odyssey modifier presentation.\n" +
+            "- Added Reaping Collision for Grim Arbiter + Cryolina Reaper.\n" +
+            "- Added the Excavator Obsidian Spike skin integration.\n\n" +
+            "<b>V1.2 CONTENT</b>\n" +
+            "- 32 custom plants total, including the 12 plants introduced in v1.2.\n" +
             "- Night Roof support in Super Level Editor+.\n" +
-            "- New Plants+ v1.2 main-menu logo and changelog.\n" +
-            "- New Almanac entries, recipes, projectiles and effects for the v1.2 plants.\n\n" +
-            "<b>POLISH</b>\n" +
-            "- Three-Buckpeater now fires correctly and has its shadow.\n" +
-            "- Sakura Sharpshooter projectile position corrected.\n" +
-            "- General gameplay, visuals and stability polish across Plants+.\n\n" +
-            "<color=#FFB74D><b>DELAYED</b> - Boreal Orchid is not included in v1.2.0 and will arrive later.</color>\n\n" +
+            "- Plants+ v1.2 main-menu logo, Almanac entries, recipes, projectiles and effects.\n\n" +
+            "<color=#FFB74D><b>DELAYED</b> - Boreal Orchid is still not included and will arrive later.</color>\n\n" +
             "<align=center><color=#64DD17><b>Quality Over Quantity.</b></color></align>";
 
         private static Sprite? logoSprite;
@@ -58,7 +49,7 @@ namespace PlantsPlus.Core
         internal static void OnStart()
         {
             Plugin.Logger.LogInfo(
-                "[Main Menu] Plants+ v1.2 changelog enabled."
+                "[Main Menu] Plants+ v1.2.1 changelog enabled."
             );
         }
 

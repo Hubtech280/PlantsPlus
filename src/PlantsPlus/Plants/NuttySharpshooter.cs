@@ -149,8 +149,8 @@ namespace PlantsPlus.Plants
 
         private static void ConfigurePiercing(Bullet bullet)
         {
-            bullet.hitTimes = 0;
-            bullet.penetrationTimes = PenetrationCount;
+            bullet.hitCount = 0;
+            bullet.maxHitCount = PenetrationCount;
         }
 
         private static Bullet? CreateDirectShot(SpruceShooter source)
@@ -216,7 +216,7 @@ namespace PlantsPlus.Plants
                     " | Bullet ID = " + NuttyBulletID +
                     " | Runtime = Bullet_pierce" +
                     " | Damage = " + bullet.Damage +
-                    " | Penetrations = " + bullet.penetrationTimes +
+                    " | Penetrations = " + bullet.maxHitCount +
                     " | Row = " + source.thePlantRow
                 );
             }
@@ -340,32 +340,21 @@ namespace PlantsPlus.Plants
             }
         }
 
-        [HarmonyPatch(typeof(Bullet_pierce), "OnTriggerEnter2D")]
+        [HarmonyPatch(
+            typeof(Bullet),
+            nameof(Bullet.Hit),
+            new Type[] { typeof(Zombie) }
+        )]
         private static class SolarPierce_Trigger_Patch
         {
-            [HarmonyPrefix]
-            [HarmonyPriority(Priority.First)]
-            private static void Prefix(
-                Bullet_pierce __instance,
-                out int __state
-            )
-            {
-                __state = __instance != null ? __instance.hitTimes : 0;
-            }
-
             [HarmonyPostfix]
             [HarmonyPriority(Priority.Last)]
-            private static void Postfix(
-                Bullet_pierce __instance,
-                int __state
-            )
+            private static void Postfix(Bullet __instance)
             {
                 if (!SolarSharpshooter.IsSolarBullet(__instance))
                     return;
 
-                int newHits = __instance.hitTimes - __state;
-                if (newHits > 0)
-                    SolarSharpshooter.DropSun(__instance, newHits);
+                SolarSharpshooter.DropSun(__instance, 1);
             }
         }
     }

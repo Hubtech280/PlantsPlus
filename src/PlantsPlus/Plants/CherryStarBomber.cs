@@ -113,8 +113,10 @@ namespace PlantsPlus.Core
                 (PlantType)Plants.CherryStarBomber.CherryStarBomberID;
 
             int guidedConstellation = CustomCore.RegisterCustomBuff(
-                "<color=red>[Guided Constellation]</color>\n" +
-                "Cherry Stars home in on zombies.",
+                "<align=center><size=24>[Guided Constellation]" +
+                "</size></align>\n" +
+                "<align=left><size=20>Cherry Stars home in on zombies." +
+                "</size></align>",
                 BuffType.UltimateBuff,
                 () => true,
                 0,
@@ -125,9 +127,10 @@ namespace PlantsPlus.Core
                 default
             );
             int stellarMomentum = CustomCore.RegisterCustomBuff(
-                "<color=red>[Stellar Momentum]</color>\n" +
-                "After traveling 3 tiles, Cherry Stars grow slightly and " +
-                "deal twice as much damage.",
+                "<align=center><size=24>[Stellar Momentum]</size></align>\n" +
+                "<align=left><size=20>After traveling 3 tiles, Cherry " +
+                "Stars grow slightly and deal twice as much damage." +
+                "</size></align>",
                 BuffType.UltimateBuff,
                 () => true,
                 0,
@@ -138,9 +141,9 @@ namespace PlantsPlus.Core
                 default
             );
             int rollingHelpers = CustomCore.RegisterCustomBuff(
-                "<color=red>[Rolling Helpers]</color>\n" +
-                "Each Jugger-nut creates a Rolling Wall-nut in its lane " +
-                "every 60 seconds.",
+                "<align=center><size=24>[Rolling Helpers]</size></align>\n" +
+                "<align=left><size=20>Each Jugger-nut creates a Rolling " +
+                "Wall-nut in its lane every 60 seconds.</size></align>",
                 BuffType.UltimateBuff,
                 () => true,
                 0,

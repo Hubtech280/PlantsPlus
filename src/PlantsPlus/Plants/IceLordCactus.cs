@@ -239,12 +239,23 @@ namespace PlantsPlus.Core
             bullet.fromType = (PlantType)Plants.IceLordCactus.IceLordCactusID;
             bullet.theBulletRow = source.thePlantRow;
 
+            MarkProjectile(bullet);
+            return bullet;
+        }
+
+        private static void MarkProjectile(Bullet? bullet)
+        {
+            if (bullet == null)
+                return;
+
             Plants.IceLordProjectileMarker? marker =
                 bullet.GetComponent<Plants.IceLordProjectileMarker>();
             if (marker == null)
                 marker = bullet.gameObject.AddComponent<Plants.IceLordProjectileMarker>();
-            marker.baseDamage = bullet.Damage;
-            return bullet;
+            marker.baseDamage = bullet.Damage > 0
+                ? bullet.Damage
+                : Plants.IceLordCactus.FallbackDamage;
+            bullet.fromType = (PlantType)Plants.IceLordCactus.IceLordCactusID;
         }
 
         internal static void ApplyCold(Zombie zombie)
@@ -315,14 +326,17 @@ namespace PlantsPlus.Core
         [HarmonyPatch(typeof(Cactus), nameof(Cactus.Shoot2))]
         private static class Cactus_Shoot2_Patch
         {
-            [HarmonyPrefix]
-            [HarmonyPriority(Priority.First)]
-            private static bool Prefix(Cactus __instance, ref Bullet __result)
+            [HarmonyPostfix]
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(Cactus __instance, Bullet __result)
             {
                 if (!IsIceLord(__instance))
-                    return true;
-                __result = Fire(__instance, true)!;
-                return false;
+                    return;
+
+                // Keep the game's native Cactus air shot. It configures the
+                // projectile so its collision actually reaches flying zombies;
+                // recreating it as a regular MoveRight bullet only looked right.
+                MarkProjectile(__result);
             }
         }
 

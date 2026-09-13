@@ -352,7 +352,7 @@ namespace PlantsPlus.Plants
                     Plugin.Logger.LogInfo(
                         "[Sea Ballista] Native bolt verified" +
                         " | Bullet = " + __result.theBulletType +
-                        " | Penetration = " + __result.penetrationTimes
+                        " | Penetration = " + __result.maxHitCount
                     );
                 }
             }

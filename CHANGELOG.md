@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.2.1] - 2026-09-13
+
+Compatibility hotfix for **PvZ Fusion 3.9**.
+
+### Compatibility
+
+- Updated Plants+ to target **PvZ Fusion 3.9**.
+- Updated the required CustomizeLib build to **CustomizeLib.MelonLoader 3.9.0-ml.1**.
+- Adapted custom projectile movement, hit counters and piercing behavior to the changes introduced in 3.9.
+- Adapted zombie health tracking to the larger health values used by PvZ Fusion 3.9.
+- Updated Odyssey modifier text presentation for the 3.9 interface.
+
+### Fixed and polished
+
+- Fixed **Ice-Lord Cactus** anti-air shots by preserving the game's native Cactus air-shot behavior.
+- Restored affected piercing, saw and lobbed-projectile mechanics after the 3.9 update.
+- Kept existing v1.2 plant mechanics compatible with the new projectile and health systems.
+
+### 3.9 integrations
+
+- Added the **Reaping Collision** Odyssey interaction for Grim Arbiter and Cryolina Reaper.
+- Added the **Excavator Obsidian Spike** skin integration for the native Obsidian Spike-nut.
+
+### Notes
+
+- No new custom plant is added in v1.2.1; the Plants+ roster remains at **32 custom plants**.
+- **Boreal Orchid (ID 6024)** is still delayed.
+- Plants+ v1.2.1 targets PvZ Fusion 3.9. Plants+ v1.2.0 remains the release for PvZ Fusion 3.8.1.
+
+---
+
 ## [1.2.0] - 2026-09-06
 
 Third public Plants+ release for PvZ Fusion 3.8.1.

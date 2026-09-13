@@ -15,13 +15,13 @@ namespace PlantsPlus
         {
             Logger = base.Logger;
 
-            Logger.LogInfo("Plants+ 1.2.0 loaded!");
+            Logger.LogInfo("Plants+ 1.2.1 loaded!");
             Logger.LogInfo(
                 "Plants+ assembly path: " +
                 typeof(Plugin).Assembly.Location
             );
             Logger.LogInfo(
-                "Plants+ build marker: 1.2.0-release"
+                "Plants+ build marker: 1.2.1-pvzf-3.9-hotfix"
             );
 
             NightRoofCards.OnStart();
@@ -30,6 +30,8 @@ namespace PlantsPlus
             NightRoofAdventure.OnStart();
             MainMenuBranding.OnStart();
             RegisterIl2CppTypes();
+            ReapingCollisionBootstrap.OnStart();
+            ExcavatorObsidianSpikeSkinBootstrap.OnStart();
             bool registered = PlantRegister.RegisterPlants();
 
             if (registered)
@@ -112,6 +114,7 @@ namespace PlantsPlus
             SauerkrautPultBootstrap.OnGameInit();
             CherryCabbageBootstrap.OnGameInit();
             LobShroomBootstrap.OnGameInit();
+            ExcavatorObsidianSpikeSkinBootstrap.OnGameInit();
 
             // CustomizeLib 3.8 currently leaves the separate lore field out
             // when it copies custom entries into the native Almanac data.
@@ -236,6 +239,12 @@ namespace PlantsPlus
 
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SauerkrautProjectileMarker>())
                 ClassInjector.RegisterTypeInIl2Cpp<SauerkrautProjectileMarker>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<ExcavatorObsidianSpikeSkinRuntime>())
+                ClassInjector.RegisterTypeInIl2Cpp<ExcavatorObsidianSpikeSkinRuntime>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<ReapingCollisionSecondEffect>())
+                ClassInjector.RegisterTypeInIl2Cpp<ReapingCollisionSecondEffect>();
 
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<NightRoofOneStrategy>())
                 ClassInjector.RegisterTypeInIl2Cpp<NightRoofOneStrategy>();

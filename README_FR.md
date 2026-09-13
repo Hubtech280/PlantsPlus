@@ -1,26 +1,18 @@
 # Plants+
 
-<<<<<<< Updated upstream
-**Plants+** est un mod de contenu pour **Plants vs. Zombies Fusion 3.8.1**. La version **1.1.1** contient vingt plantes personnalisées, leurs mécaniques originales, fiches d'Almanach, recettes de fusion et de conversion, prefabs, compatibilité Odyssey, améliorations de l'éditeur et nouveaux éléments de menu.
+**Plants+** est un mod de contenu pour **Plants vs. Zombies Fusion 3.9**.
 
-> Version interne MelonLoader : `1.1.1-ml.13`
-
-![Logo Plants+ v1.1](src/PlantsPlus/Resources/Sprites/plants_v1_1_logo.png)
-=======
-**Plants+** est un mod de contenu pour **Plants vs. Zombies Fusion 3.8.1**. La version **1.2.0** contient **32 plantes personnalisées**, leurs mécaniques originales, fiches d'Almanach, recettes de fusion et de conversion, prefabs, compatibilité Odyssey, ajouts au Super Level Editor+ et présentation personnalisée du menu.
+La version **1.2.1** est le hotfix de compatibilité PvZ Fusion 3.9 de la v1.2. Elle conserve les **32 plantes personnalisées** de la v1.2.0 et adapte leurs mécaniques aux changements introduits dans PvZ Fusion 3.9.
 
 ![Logo Plants+ v1.2](src/PlantsPlus/Resources/Sprites/plants_v1_2_logo.png)
->>>>>>> Stashed changes
 
 ## Prérequis
 
-- Plants vs. Zombies Fusion **3.8.1**
+- Plants vs. Zombies Fusion **3.9**
 - MelonLoader **0.7.3**
-<<<<<<< Updated upstream
-- **CustomizeLib.MelonLoader 3.8.1-ml.1** (`CustomizeLib.MelonLoader.dll`)
-=======
-- **CustomizeLib.MelonLoader 3.8.1**
->>>>>>> Stashed changes
+- **CustomizeLib.MelonLoader 3.9.0-ml.1**
+
+> Plants+ **v1.2.1 cible PvZ Fusion 3.9**. Si tu restes sur PvZ Fusion 3.8.1, utilise Plants+ v1.2.0.
 
 ## Plantes incluses
 
@@ -51,69 +43,62 @@
 | 6022 | Three-Buckpeater | Basic Fusion | Threepeater + Bucket |
 | 6023 | Sakura Sharpshooter | Basic Fusion | Cherry Bomb + Spruce Sharpshooter |
 | 6025 | Bomber Drone | Basic Fusion | Cherryshooter + Blover |
-| 6031 | Frostbite Drone | Basic Fusion | Snow Pea + Blover |
 | 6026 | Ice-Lord Cactus | Odyssey | Ice Cactus + Iceberg-shroom |
 | 6027 | Scovilia Pepper | Basic Fusion | Jalapeno + Jalapeno |
-| 6028 | Atomray-shroom | Odyssey | Plantern ↔ Fume-shroom |
+| 6028 | Atomray-shroom | Odyssey | Plantern + Fume-shroom |
 | 6029 | Sauerkraut-pult | Odyssey | Garbage-pult + Pepper Popper |
 | 6030 | Cherry Cabbage | Basic Fusion | Cherry Bomb + Cabbage-pult |
-| 6032 | Lob-shroom | Basic Fusion | Custom / lanceur de spores empilable |
+| 6031 | Frostbite Drone | Basic Fusion | Snow Pea + Blover |
+| 6032 | Lob-shroom | Basic Fusion | Lanceur de spores empilable |
 
-L'ID **6024** est réservé à **Boreal Orchid**, qui a été repoussée et ne fait pas partie de la v1.2.0.
+> **Boreal Orchid (ID 6024) reste repoussée et n'est pas incluse dans Plants+ v1.2.1.**
 
-## Nouveautés principales de la v1.2
+## Nouveautés de la v1.2.1
 
-- Douze nouvelles plantes, de Sea Sharpshooter à Lob-shroom.
-- Sea Sharpshooter grandit en trois stades aquatiques de plus en plus puissants.
-- Cherry StarBomber lance deux volées explosives de Cherry Stars et possède des modificateurs Odyssey.
-- Three-Buckpeater attaque trois lignes avec des pois de fer.
-- Sakura Sharpshooter mélange épines explosives et réactions en chaîne avec Explode-o-shooter.
-- Bomber Drone et Frostbite Drone ajoutent deux tireurs de soutien volants.
-- Ice-Lord Cactus change d'attaque contre les zombies au sol ou dans les airs.
-- Scovilia Pepper brûle trois lignes en même temps.
-- Atomray-shroom mélange rayon ralentissant et effets de Demise-shroom.
-- Sauerkraut-pult change de mode d'attaque selon la distance des zombies.
-- Cherry Cabbage devient plus dangereuse quand les zombies approchent de la maison.
-- Lob-shroom est un lanceur de spores en arc empilable.
-- Night Roof est disponible dans le Super Level Editor+.
-- Nouveau logo v1.2 sur le menu principal et changelog en jeu mis à jour.
+La v1.2.1 est avant tout un **hotfix de compatibilité pour PvZ Fusion 3.9**. Elle n'ajoute pas de nouvelle plante personnalisée.
+
+- Mise à jour de Plants+ pour les changements de projectiles et de déplacement de PvZ Fusion 3.9.
+- Adaptation de la gestion des PV des zombies aux valeurs plus grandes utilisées par la 3.9.
+- Rétablissement du comportement des projectiles perforants, des scies et des projectiles en cloche affectés par la mise à jour.
+- Correction des tirs anti-aériens d'**Ice-Lord Cactus** afin de conserver le ciblage aérien natif du Cactus.
+- Présentation des modifiers Odyssey adaptée à PvZ Fusion 3.9.
+- Ajout de l'interaction Odyssey **Reaping Collision** entre Grim Arbiter et Cryolina Reaper.
+- Ajout de l'intégration du skin **Excavator Obsidian Spike** pour l'Obsidian Spike-nut natif.
+- Tout le contenu de la v1.2 et les 32 plantes personnalisées sont conservés.
 
 ## Installation
 
-<<<<<<< Updated upstream
-1. Installe MelonLoader 0.7.3 pour PVZ Fusion 3.8.1.
-2. Place `CustomizeLib.MelonLoader.dll` dans le dossier `Mods` du jeu.
-3. Supprime les anciennes copies de `PlantsPlus.dll`.
-4. Place le `PlantsPlus.dll` de la release GitHub dans le dossier `Mods`.
-5. Lance le jeu et vérifie la présence de `Plants+ 1.1.1-ml.13 loaded!` dans le log MelonLoader.
-=======
-1. Installe MelonLoader pour PvZ Fusion 3.8.1.
-2. Place `CustomizeLib.MelonLoader.dll` dans le dossier `Mods` du jeu.
-3. Supprime les anciennes copies de `PlantsPlus.dll`.
-4. Place le `PlantsPlus.dll` de la v1.2 dans le dossier `Mods`.
-5. Lance le jeu et vérifie que `Plants+ 1.2.0 loaded!` apparaît dans le log MelonLoader.
->>>>>>> Stashed changes
+1. Installe MelonLoader 0.7.3 pour PvZ Fusion 3.9.
+2. Place `CustomizeLib.MelonLoader.dll` **v3.9.0-ml.1** dans le dossier `Mods` du jeu.
+3. Supprime toutes les anciennes copies de `PlantsPlus.dll`.
+4. Place le `PlantsPlus.dll` de Plants+ v1.2.1 dans le dossier `Mods`.
+5. Lance le jeu et vérifie la présence de `Plants+ 1.2.1 loaded!` dans le log MelonLoader.
+
+Ne conserve pas une ancienne version de CustomizeLib en même temps que la version 3.9.
 
 ## Documentation
 
 - [Mécaniques des plantes](docs/PLANTS_FR.md)
-- [Compiler le projet](docs/BUILDING_FR.md)
 - [Historique des versions](CHANGELOG.md)
 - [README anglais](README.md)
+- [Modèle de release GitHub](docs/GITHUB_RELEASE_TEMPLATE.md)
 
 ## Compilation
 
-Le projet cible `.NET 6` et référence les assemblies générées par MelonLoader. Les DLL du jeu et CustomizeLib ne sont pas redistribuées dans ce dépôt.
+Le projet cible `.NET 6` et référence les assemblies générées par MelonLoader.
+
+Lance `BUILD_RELEASE.bat` puis sélectionne ton dossier PvZ Fusion 3.9. Le script compile Plants+, crée l'archive de release, génère le hash du binaire et peut installer la DLL obtenue dans le dossier `Mods` du jeu.
+
+Les assemblies du jeu et CustomizeLib ne sont pas redistribuées dans ce dépôt.
 
 ## Signaler un bug
 
-Ouvre une issue et joins le log MelonLoader complet. Indique la plante, la recette et les étapes qui provoquent le problème.
+Ouvre une issue et joins le log MelonLoader complet. Indique la plante ou la mécanique concernée et les étapes exactes qui provoquent le problème.
 
 ## Crédits
 
 - Créateur du mod et concepts des plantes : **Auro**
-- Dessins des plantes et fusions : **Red Reel** et **Retrosphere**
-- Montage des vidéos de présentation : **Mathys**
+- Dessins des plantes et fusions : **Red Reel**, **Retrosphere**, **Aris** et **Roshade**
 - Créé pour la communauté de modding PvZ Fusion avec CustomizeLib
 
 ## Avertissement

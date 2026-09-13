@@ -12,9 +12,9 @@
     <DebugSymbols>false</DebugSymbols>
     <DebugType>None</DebugType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <Version>1.2.0</Version>
-    <AssemblyVersion>1.2.0.21</AssemblyVersion>
-    <FileVersion>1.2.0.21</FileVersion>
+    <Version>1.2.1</Version>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>../build/</OutputPath>
@@ -32,6 +32,7 @@
   <ItemGroup>
     <!-- Magnet-o-pea is enabled for the beta; set EnableMagnetOPea=false for a fallback build. -->
     <EmbeddedResource Include="Resources/AssetBundles/cherry_cabbage" LogicalName="PlantsPlus.Resources.AssetBundles.cherry_cabbage" />
+    <EmbeddedResource Include="Resources/AssetBundles/excavatorobsidianspikeskin" LogicalName="PlantsPlus.Resources.AssetBundles.excavatorobsidianspikeskin" />
     <EmbeddedResource Include="Resources/AssetBundles/bullet_cherrycabbage" LogicalName="PlantsPlus.Resources.AssetBundles.bullet_cherrycabbage" />
     <EmbeddedResource Include="Resources/AssetBundles/lob_shroom" LogicalName="PlantsPlus.Resources.AssetBundles.lob_shroom" />
     <EmbeddedResource Include="Resources/AssetBundles/nightroofmap" LogicalName="PlantsPlus.Resources.AssetBundles.nightroofmap" />

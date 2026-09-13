@@ -534,8 +534,7 @@ namespace PlantsPlus.Plants
             try
             {
                 bullet._moveWay = BulletMoveWay.Stable;
-                bullet.Vx = 0f;
-                bullet.Vy = 0f;
+                bullet.velocity = Vector2.zero;
 
                 if (bullet.rb != null)
                     bullet.rb.velocity = Vector2.zero;
@@ -947,7 +946,7 @@ namespace PlantsPlus.Plants
                 if (!Resolve(__instance, false) &&
                     __instance != null &&
                     __instance._moveWay == BulletMoveWay.Throw &&
-                    !__instance.hit)
+                    __instance.hitCount == 0)
                 {
                     NotifyExternalMiss(__instance);
                 }

@@ -1000,7 +1000,7 @@ namespace PlantsPlus.Plants
             {
                 // LoadResources fires before a board/scene exists. Mirroring
                 // PlantData is safe here, but touching the registered prefab's
-                // runtime Entity references is not (3.8.1 can hand us partial
+                // runtime Entity references is not (the game can hand us partial
                 // IL2CPP wrappers and throw a NullReferenceException). Every
                 // placed Inferno Torchflower repairs its references in Start.
                 RefreshNativePlantData();

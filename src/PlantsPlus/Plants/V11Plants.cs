@@ -61,14 +61,14 @@ namespace PlantsPlus.Core
         private readonly struct ZombieHealthSnapshot
         {
             public ZombieHealthSnapshot(
-                int body,
-                int firstArmor,
-                int secondArmor
+                long body,
+                long firstArmor,
+                long secondArmor
             )
             {
-                Body = Mathf.Max(0, body);
-                FirstArmor = Mathf.Max(0, firstArmor);
-                SecondArmor = Mathf.Max(0, secondArmor);
+                Body = Math.Max(0L, body);
+                FirstArmor = Math.Max(0L, firstArmor);
+                SecondArmor = Math.Max(0L, secondArmor);
 
                 long total = (long)Body + FirstArmor + SecondArmor;
                 Total = total > int.MaxValue
@@ -76,9 +76,9 @@ namespace PlantsPlus.Core
                     : (int)total;
             }
 
-            public int Body { get; }
-            public int FirstArmor { get; }
-            public int SecondArmor { get; }
+            public long Body { get; }
+            public long FirstArmor { get; }
+            public long SecondArmor { get; }
             public int Total { get; }
         }
 
@@ -1314,8 +1314,8 @@ namespace PlantsPlus.Core
             bullet.shootingLevel = source.shootingLevel;
             bullet.from = source;
             bullet.fromType = sourceType;
-            bullet.hitTimes = 0;
-            bullet.penetrationTimes =
+            bullet.hitCount = 0;
+            bullet.maxHitCount =
                 NotAPeaProjectile.TraversalBudget;
 
             NotAPeaProjectile? behaviour =
@@ -1339,7 +1339,7 @@ namespace PlantsPlus.Core
                     "[" + plantName + "] Direct saw shot created" +
                     " | Bullet ID = " + NotAPeaProjectile.NotAPeaBulletID +
                     " | Damage = " + bullet.Damage +
-                    " | Penetrations = " + bullet.penetrationTimes +
+                    " | Penetrations = " + bullet.maxHitCount +
                     " | Row = " + source.thePlantRow
                 );
             }
@@ -2945,9 +2945,8 @@ namespace PlantsPlus.Plants
                 bullet.board = Board.Instance;
 
             bullet.dying = false;
-            bullet.hit = false;
-            bullet.hitTimes = 0;
-            bullet.penetrationTimes = TraversalBudget;
+            bullet.hitCount = 0;
+            bullet.maxHitCount = TraversalBudget;
 
             if (body != null)
                 body.simulated = true;
@@ -3098,8 +3097,8 @@ namespace PlantsPlus.Plants
                 false
             );
 
-            bullet.hitTimes++;
-            bullet.penetrationTimes = TraversalBudget;
+            bullet.hitCount++;
+            bullet.maxHitCount = TraversalBudget;
         }
 
         internal void CompleteTraversalImpact()
@@ -3108,8 +3107,7 @@ namespace PlantsPlus.Plants
 
             if (bullet != null)
             {
-                bullet.hit = false;
-                bullet.penetrationTimes = TraversalBudget;
+                bullet.maxHitCount = TraversalBudget;
             }
         }
 
@@ -3123,15 +3121,15 @@ namespace PlantsPlus.Plants
             if (bullet == null)
                 return;
 
-            bullet.hit = false;
-            bullet.penetrationTimes = TraversalBudget;
+            bullet.maxHitCount = TraversalBudget;
 
             if (motionStored)
             {
-                bullet.Vx = storedVx;
-                bullet.Vy = storedVy;
-                bullet.detaVx = storedDetaVx;
-                bullet.detaVy = storedDetaVy;
+                bullet.velocity = new Vector2(storedVx, storedVy);
+                bullet.acceleration = new Vector2(
+                    storedDetaVx,
+                    storedDetaVy
+                );
                 bullet.normalSpeed = storedNormalSpeed;
                 bullet.trackSpeed = storedTrackSpeed;
 
@@ -3217,10 +3215,10 @@ namespace PlantsPlus.Plants
             if (!motionStored)
             {
                 motionStored = true;
-                storedVx = bullet.Vx;
-                storedVy = bullet.Vy;
-                storedDetaVx = bullet.detaVx;
-                storedDetaVy = bullet.detaVy;
+                storedVx = bullet.velocity.x;
+                storedVy = bullet.velocity.y;
+                storedDetaVx = bullet.acceleration.x;
+                storedDetaVy = bullet.acceleration.y;
                 storedNormalSpeed = bullet.normalSpeed;
                 storedTrackSpeed = bullet.trackSpeed;
                 storedVelocity = body != null
@@ -3228,14 +3226,11 @@ namespace PlantsPlus.Plants
                     : Vector2.zero;
             }
 
-            bullet.Vx = 0f;
-            bullet.Vy = 0f;
-            bullet.detaVx = 0f;
-            bullet.detaVy = 0f;
+            bullet.velocity = Vector2.zero;
+            bullet.acceleration = Vector2.zero;
             bullet.normalSpeed = 0f;
             bullet.trackSpeed = 0f;
-            bullet.hit = false;
-            bullet.penetrationTimes = TraversalBudget;
+            bullet.maxHitCount = TraversalBudget;
 
             if (body != null)
             {

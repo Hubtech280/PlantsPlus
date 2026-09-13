@@ -1,39 +1,26 @@
 # Notice
 
-<<<<<<< Updated upstream
-## Plants+ 1.2.0
-=======
 This repository contains the source code and custom resources for the fan-made **Plants+** mod.
->>>>>>> Stashed changes
 
-This project is a mod for **PvZ Fusion** and requires the base game together with the required modding environment to run properly.
+## Plants+ v1.2.1
 
-### Important
-- **Plants+** is not the base game.
-- You must own and install **PvZ Fusion** separately.
-- This package includes source/release-related files for the mod itself.
+Plants+ v1.2.1 is a compatibility hotfix for **Plants vs. Zombies Fusion 3.9**.
 
 ### Requirements
-- PvZ Fusion
-- MelonLoader
-- CustomizeLib
-- The required game assemblies / dependencies
 
-### Installation
-1. Install **PvZ Fusion**.
-2. Install the required modding dependencies.
-3. Build or install **Plants+** as instructed in the provided files.
-4. Place the resulting mod files into the correct game folders.
+- Plants vs. Zombies Fusion **3.9**
+- MelonLoader **0.7.3**
+- CustomizeLib.MelonLoader **3.9.0-ml.1**
 
-### Final 1.2 Release Note
-The **1.2.0** release mainly focuses on:
-- new plants,
-- fixes,
-- updated visuals,
-- updated logo,
-- updated in-game changelog,
-- general cleanup and release preparation.
+The base game, MelonLoader, CustomizeLib and generated game assemblies are not included in this source package and must be obtained separately.
+
+Do not load multiple versions of `PlantsPlus.dll` or CustomizeLib at the same time.
+
+### Version compatibility
+
+- Plants+ **v1.2.1** targets PvZ Fusion **3.9**.
+- Plants+ **v1.2.0** remains the compatible release for PvZ Fusion **3.8.1**.
 
 ### Disclaimer
-This is a fan-made mod project intended for use with PvZ Fusion.
-All rights to the original game content belong to their respective owners.
+
+Plants+ is a fan-made, unofficial mod. It is not affiliated with or endorsed by Electronic Arts, PopCap Games, or the PvZ Fusion developers. Plants vs. Zombies and related names belong to their respective owners.

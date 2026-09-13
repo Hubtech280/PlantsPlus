@@ -1,32 +1,32 @@
-# Plants+ v1.1.1
+# Plants+ v1.2.1 - PvZ Fusion 3.9 Hotfix
 
-Plants+ v1.1 doubles the roster to twenty custom plants and adds new editor and menu features for PvZ Fusion 3.8.1. Version 1.1.1 is the compatibility and quality hotfix for the public v1.1 release.
+Plants+ v1.2.1 ports the v1.2 release to **PvZ Fusion 3.9**. The custom plant roster remains at 32; this release focuses on compatibility with the new game version and a few 3.9 integrations.
 
 ## Requirements
 
-- PvZ Fusion 3.8.1
+- PvZ Fusion 3.9
 - MelonLoader 0.7.3
-- CustomizeLib.MelonLoader 3.8.1-ml.1
+- CustomizeLib.MelonLoader 3.9.0-ml.1
 
 ## Installation
 
 1. Install the requirements.
 2. Remove every older `PlantsPlus.dll`.
-3. Download `PlantsPlus-1.1.1-Release.zip`.
-4. Copy `PlantsPlus.dll` into the game's `Mods` folder.
-5. Start the game and verify `Plants+ 1.1.1-ml.13 loaded!` in the log.
+3. Remove any older CustomizeLib build.
+4. Download `PlantsPlus-1.2.1-Release.zip`.
+5. Copy `PlantsPlus.dll` into the game's `Mods` folder.
+6. Start the game and verify `Plants+ 1.2.1 loaded!` in the log.
 
-## New plants
+## Hotfix highlights
 
-Not-a-pea, Not-a-storm Commando, Frost Furflower, Doomtronion, Lichen-pea, Logic Blover, Solar Sharpshooter, Sea Ballista, Pineshooter and Icytronion.
-
-## Other highlights
-
-- Inferno Torchflower rework.
-- Christmas Snow and themed Super Level Editor previews.
-- Electronion/Amp-nion Almanac, Carbon Copy, card and Sandbox integration.
-- Plants+ main-menu logo and dedicated changelog.
-- Extensive gameplay and visual fixes.
-- Correct Electronion placement, locking and presentation in restricted challenge levels such as The Gods: Evolved, without duplicates in normal Adventures.
+- Updated Plants+ for PvZ Fusion 3.9.
+- Restored projectile, piercing, saw and lobbed-shot behavior affected by the 3.9 update.
+- Updated zombie health handling for the larger values used in 3.9.
+- Fixed Ice-Lord Cactus anti-air shots.
+- Updated Odyssey modifier presentation.
+- Added the Reaping Collision Odyssey interaction.
+- Added the Excavator Obsidian Spike skin integration.
+- No new custom plants: Plants+ still contains 32 custom plants.
+- Boreal Orchid remains delayed.
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for the complete release notes.
