@@ -4,17 +4,18 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>x64</PlatformTarget>
-    <AssemblyName>PlantsPlus</AssemblyName>
+    <AssemblyName>PvZFusionPlus</AssemblyName>
     <RootNamespace>PlantsPlus</RootNamespace>
     <OutputType>Library</OutputType>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <DebugSymbols>false</DebugSymbols>
     <DebugType>None</DebugType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <Version>1.2.1</Version>
-    <AssemblyVersion>1.2.1.0</AssemblyVersion>
-    <FileVersion>1.2.1.0</FileVersion>
+    <Version>1.3.0</Version>
+    <AssemblyVersion>1.3.0.6</AssemblyVersion>
+    <FileVersion>1.3.0.6</FileVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>../build/</OutputPath>
@@ -30,9 +31,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources/UI/favorite_selected.png" LogicalName="PlantsPlus.Resources.UI.favorite_selected.png" />
+    <EmbeddedResource Include="Resources/UI/favorite_unselected.png" LogicalName="PlantsPlus.Resources.UI.favorite_unselected.png" />
+    <EmbeddedResource Include="Resources/AssetBundles/solstice_shroom" LogicalName="PlantsPlus.Resources.AssetBundles.solstice_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/bamboom" LogicalName="PlantsPlus.Resources.AssetBundles.bamboom" />
+    <EmbeddedResource Include="Resources/Branding/logo.png" LogicalName="PlantsPlus.Resources.Branding.logo.png" />
+    <EmbeddedResource Include="Resources/Branding/logo_chinese.png" LogicalName="PlantsPlus.Resources.Branding.logo_chinese.png" />
     <!-- Magnet-o-pea is enabled for the beta; set EnableMagnetOPea=false for a fallback build. -->
+    <EmbeddedResource Include="Resources/AssetBundles/saw_my_pot" LogicalName="PlantsPlus.Resources.AssetBundles.saw_my_pot" />
+    <EmbeddedResource Include="Resources/AssetBundles/vortexpot" LogicalName="PlantsPlus.Resources.AssetBundles.vortexpot" />
     <EmbeddedResource Include="Resources/AssetBundles/cherry_cabbage" LogicalName="PlantsPlus.Resources.AssetBundles.cherry_cabbage" />
     <EmbeddedResource Include="Resources/AssetBundles/excavatorobsidianspikeskin" LogicalName="PlantsPlus.Resources.AssetBundles.excavatorobsidianspikeskin" />
+    <EmbeddedResource Include="Resources/AssetBundles/slime_shroom" LogicalName="PlantsPlus.Resources.AssetBundles.slime_shroom" />
     <EmbeddedResource Include="Resources/AssetBundles/bullet_cherrycabbage" LogicalName="PlantsPlus.Resources.AssetBundles.bullet_cherrycabbage" />
     <EmbeddedResource Include="Resources/AssetBundles/lob_shroom" LogicalName="PlantsPlus.Resources.AssetBundles.lob_shroom" />
     <EmbeddedResource Include="Resources/AssetBundles/nightroofmap" LogicalName="PlantsPlus.Resources.AssetBundles.nightroofmap" />
@@ -70,8 +80,6 @@
                       LogicalName="PlantsPlus.Resources.Sprites.doomtronion_biu.png" />
     <EmbeddedResource Include="Resources/Sprites/night_roof_card.png"
                       LogicalName="PlantsPlus.Resources.Sprites.night_roof_card.png" />
-    <EmbeddedResource Include="Resources/Sprites/plants_v1_2_logo.png"
-                      LogicalName="PlantsPlus.Resources.Sprites.plants_v1_2_logo.png" />
     <EmbeddedResource Include="Resources/Sprites/EditorMaps/*.png" />
     <EmbeddedResource Include="Resources/AssetBundles/lichenpea"
                       LogicalName="PlantsPlus.Resources.AssetBundles.lichenpea" />
@@ -105,6 +113,22 @@
                       LogicalName="PlantsPlus.Resources.AssetBundles.bullet_sakurasharpshooter" />
     <EmbeddedResource Include="Resources/AssetBundles/boreal_orchid"
                       LogicalName="PlantsPlus.Resources.AssetBundles.boreal_orchid" />
+    <EmbeddedResource Include="Resources/AssetBundles/bounce_shroom"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bounce_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/bumping_shroom"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.bumping_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/spark_shroom"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.spark_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/superaqua_shroom"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.superaqua_shroom" />
+    <EmbeddedResource Include="Resources/AssetBundles/pulse_shroom"
+                      LogicalName="PlantsPlus.Resources.AssetBundles.pulse_shroom" />
+    <EmbeddedResource Include="Resources/Audio/night_roof_theme.mp3"
+                      LogicalName="PlantsPlus.Resources.Audio.night_roof_theme.mp3" />
+    <EmbeddedResource Include="Resources/Audio/night_roof_horde.mp3"
+                      LogicalName="PlantsPlus.Resources.Audio.night_roof_horde.mp3" />
+    <EmbeddedResource Include="Resources/Audio/moon_broom.mp3"
+                      LogicalName="PlantsPlus.Resources.Audio.moon_broom.mp3" />
     <EmbeddedResource Include="Resources/AssetBundles/bomberdrone"
                       LogicalName="PlantsPlus.Resources.AssetBundles.bomberdrone" />
     <EmbeddedResource Include="Resources/AssetBundles/frostbitedrone"
@@ -144,11 +168,14 @@
     <Reference Include="Il2CppSystem.Core" HintPath="$(Il2CppRefs)/Il2CppSystem.Core.dll" Private="false" />
     <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(Il2CppRefs)/UnityEngine.AssetBundleModule.dll" Private="false" />
     <Reference Include="UnityEngine.AnimationModule" HintPath="$(Il2CppRefs)/UnityEngine.AnimationModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AudioModule" HintPath="$(Il2CppRefs)/UnityEngine.AudioModule.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(Il2CppRefs)/UnityEngine.CoreModule.dll" Private="false" />
     <Reference Include="UnityEngine.ImageConversionModule" HintPath="$(Il2CppRefs)/UnityEngine.ImageConversionModule.dll" Private="false" />
     <Reference Include="UnityEngine.Physics2DModule" HintPath="$(Il2CppRefs)/UnityEngine.Physics2DModule.dll" Private="false" />
     <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(Il2CppRefs)/UnityEngine.ParticleSystemModule.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(Il2CppRefs)/UnityEngine.UIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UnityWebRequestModule" HintPath="$(Il2CppRefs)/UnityEngine.UnityWebRequestModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule" HintPath="$(Il2CppRefs)/UnityEngine.UnityWebRequestAudioModule.dll" Private="false" />
     <Reference Include="Unity.TextMeshPro" HintPath="$(Il2CppRefs)/Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Il2CppRefs)/UnityEngine.UI.dll" Private="false" />
   </ItemGroup>

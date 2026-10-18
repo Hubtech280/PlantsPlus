@@ -11,7 +11,6 @@ namespace PlantsPlus.Core
     internal static class ScoviliaPepperBootstrap
     {
         private static bool registered;
-        private static bool patchesInstalled;
         private static bool nativeDataLogged;
 
         internal static void OnStart()
@@ -19,7 +18,6 @@ namespace PlantsPlus.Core
             if (registered)
                 return;
             registered = true;
-            InstallPatches();
 
             try
             {
@@ -68,30 +66,6 @@ namespace PlantsPlus.Core
                     "[Scovilia Pepper] Registration failed safely: " + exception
                 );
             }
-        }
-
-        private static void InstallPatches()
-        {
-            if (patchesInstalled)
-                return;
-            patchesInstalled = true;
-
-            HarmonyLib.Harmony harmony =
-                new HarmonyLib.Harmony("PlantsPlus.ScoviliaPepper");
-            harmony.Patch(
-                AccessTools.Method(typeof(Jalapeno), nameof(Jalapeno.AnimExplode)),
-                prefix: new HarmonyMethod(
-                    AccessTools.Method(typeof(ScoviliaPepperBootstrap),
-                        nameof(JalapenoAnimExplodePrefix))
-                )
-            );
-            harmony.Patch(
-                AccessTools.Method(typeof(GameAPP), nameof(GameAPP.LoadResources)),
-                postfix: new HarmonyMethod(
-                    AccessTools.Method(typeof(ScoviliaPepperBootstrap),
-                        nameof(GameAppLoadResourcesPostfix))
-                )
-            );
         }
 
         internal static void OnGameInit()
@@ -176,6 +150,21 @@ namespace PlantsPlus.Core
         }
 
         private static void GameAppLoadResourcesPostfix() => RefreshNativeData();
+
+        [HarmonyPatch(typeof(Jalapeno), nameof(Jalapeno.AnimExplode))]
+        private static class Jalapeno_AnimExplode_Patch
+        {
+            [HarmonyPrefix]
+            private static void Prefix(Jalapeno __instance) =>
+                JalapenoAnimExplodePrefix(__instance);
+        }
+
+        [HarmonyPatch(typeof(GameAPP), nameof(GameAPP.LoadResources))]
+        private static class GameAPP_LoadResources_Patch
+        {
+            [HarmonyPostfix]
+            private static void Postfix() => GameAppLoadResourcesPostfix();
+        }
     }
 }
 

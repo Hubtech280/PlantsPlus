@@ -762,6 +762,16 @@ namespace PlantsPlus.Core
             SpawnBiu(ZombieAnchor(source), ZombieAnchor(target));
         }
 
+        internal static void SpawnZombieLightning(
+            Zombie source,
+            Zombie target)
+        {
+            if (source == null || target == null || source == target)
+                return;
+
+            SpawnBiu(source, target);
+        }
+
         private static void SpawnBiu(Vector3 start, Vector3 end)
         {
             Sprite? sprite = biuSprite;

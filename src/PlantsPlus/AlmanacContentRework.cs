@@ -1,11 +1,10 @@
+using System.Collections.Generic;
 using System.Text;
 
 namespace PlantsPlus.Core
 {
     /// <summary>
-    /// Plants+ Almanac copy written in the same compact order as native
-    /// PvZ Fusion entries: purpose, availability, statistics, mechanics,
-    /// modifiers, then character lore and the recipe.
+    /// Almanac source for both the Chinese game and the optional translator.
     /// </summary>
     internal static class AlmanacContent
     {
@@ -14,6 +13,9 @@ namespace PlantsPlus.Core
         private const string RedOpen = "<color=#8B0000>";
         private const string UsageOpen = "<color=#4A2900>";
         private const string Close = "</color>";
+        private static readonly Dictionary<string,
+            (AlmanacEntry English, AlmanacEntry Chinese,
+                AlmanacEntry French)> LocalizedEntries = new();
 
         private static string Black(string text) => BlackOpen + text + Close;
         private static string Brown(string text) => BrownOpen + text + Close;
@@ -31,7 +33,11 @@ namespace PlantsPlus.Core
             string? conversion = null
         )
         {
-            StringBuilder info = new StringBuilder(Brown(summary));
+            AlmanacVoice.English(name, ref summary, ref lore);
+            lore = PlantFlavorText.Get(name, PlantsPlusLanguage.English, lore);
+            // Native entries leave the opening description uncoloured. The
+            // Almanac UI then applies the correct colour for the plant class.
+            StringBuilder info = new StringBuilder(summary);
             info.Append("\n\n");
 
             if (!string.IsNullOrWhiteSpace(usage))
@@ -75,7 +81,7 @@ namespace PlantsPlus.Core
             StringBuilder cost = new StringBuilder();
             if (!string.IsNullOrWhiteSpace(recipe))
             {
-                cost.Append('\n').Append(Brown("Fusion Recipe: "))
+                cost.Append('\n').Append("Fusion Recipe: ")
                     .Append(Red(recipe));
             }
             if (!string.IsNullOrWhiteSpace(conversion))
@@ -84,17 +90,68 @@ namespace PlantsPlus.Core
                     cost.Append('\n');
                 else
                     cost.Append('\n');
-                cost.Append(Brown("Conversion Recipe: "))
+                cost.Append("Conversion Recipe: ")
                     .Append(Red(conversion));
             }
 
-            return new AlmanacEntry(
+            AlmanacEntry english = new AlmanacEntry(
                 name,
                 info.ToString().TrimEnd(),
                 introduce,
                 cost.ToString()
             );
+            if (!ChineseAlmanacContent.TryCreate(
+                name, usage, stats, out AlmanacEntry chinese))
+                chinese = english;
+            if (!FrenchAlmanacContent.TryCreate(name, usage, stats, out AlmanacEntry french))
+                french = new AlmanacEntry(
+                    FrenchAlmanacContent.TranslateApprovedNames(name),
+                    FrenchAlmanacContent.TranslateApprovedNames(info.ToString().TrimEnd()),
+                    FrenchAlmanacContent.TranslateApprovedNames(introduce),
+                    FrenchAlmanacContent.TranslateApprovedNames(cost.ToString()));
+
+            LocalizedEntries[english.Name] = (english, chinese, french);
+            LocalizedEntries[chinese.Name] = (english, chinese, french);
+            LocalizedEntries[french.Name] = (english, chinese, french);
+            return LocalizationBridge.Current switch
+            {
+                PlantsPlusLanguage.Chinese => chinese,
+                PlantsPlusLanguage.French => french,
+                _ => english
+            };
         }
+
+        internal static AlmanacEntry ForCurrentLanguage(AlmanacEntry entry)
+        {
+            if (!LocalizedEntries.TryGetValue(entry.Name, out var variants))
+                return entry;
+
+            return LocalizationBridge.Current switch
+            {
+                PlantsPlusLanguage.Chinese => variants.Chinese,
+                PlantsPlusLanguage.French => variants.French,
+                _ => variants.English
+            };
+        }
+
+        public static readonly AlmanacEntry Ceasarweed = Plant(
+            "Ceasarweed", "Ceasarweed throws more salads when projectiles miss.",
+            "Ceasarweed brought lunch for everyone. Nobody asked for a second helping.",
+            "", stats: new[] { "Toughness", "4000", "Damage", "80/3s" },
+            special: new[] {
+                "Throws 1 + the previous volley's missed salads, up to 10. Other missed lobbed projectiles also add one salad.",
+                "Each hit butters the zombie for 4s.",
+                "Normal zombies and Zombonis ignore him. Gargantuars can still attack him."
+            }, conversion: "Spikeweed <-> Melon-pult");
+        public static readonly AlmanacEntry SolarFirnace = Plant(
+            "Solar Firnace", "Solar Firnace produces Sun until his timer runs out. Click him to buy more time.",
+            "His alarm clock goes off every morning. He pays it to come back later.",
+            "Firnace + Sunflower", stats: new[] { "Toughness", "4000", "Lifetime", "90s", "Sun Output", "25/25s" },
+            special: new[] {
+                "Click to spend 100 Sun and add 45s. Each purchase costs 50 more Sun than the last.",
+                "Protects the plant below from snow freezing.",
+                "Turns back into Firnace when his time runs out."
+            });
 
         public static readonly AlmanacEntry LotusPumpkin = Plant(
             "Lotus Pumpkin",
@@ -105,7 +162,7 @@ namespace PlantsPlus.Core
             special: new[]
             {
                 "Protects one plant on the same tile.",
-                "Builds charge over time and whenever she actually loses Toughness.",
+                "Gains charges over time and when she loses HP.",
                 "At 5 charges, heals the protected plant for up to 600 Toughness instead of healing herself."
             }
         );
@@ -181,7 +238,7 @@ namespace PlantsPlus.Core
             special: new[]
             {
                 "Before ignition, behaves like a normal Torchflower and drops Sun automatically.",
-                "Each valid Jalapeno fire line grants 50 energy. While lit, produced and extracted Sun is stored.",
+                "Each Jalapeno fire line grants 50 energy. While lit, stores produced and extracted Sun.",
                 "Click to release the reserve. Every 50 energy adds ×0.5 to the payout, then the reserve and energy reset."
             },
             conversion: "Sunflower <-> Torchwood"
@@ -219,7 +276,7 @@ namespace PlantsPlus.Core
             {
                 "Guided Constellation — Cherry Stars home in on zombies.",
                 "Stellar Momentum — after travelling 3 tiles, Cherry Stars grow and deal ×2 damage.",
-                "Rolling Helpers — every Jugger-nut creates a real Rolling Wall-nut in its lane every 60 seconds."
+                "Rolling Helpers — every Jugger-nut creates a Rolling Wall-nut in its lane every 60 seconds."
             },
             "Starfruit <-> Peashooter"
         );
@@ -319,7 +376,7 @@ namespace PlantsPlus.Core
             special: new[]
             {
                 "Projectiles pierce multiple zombies.",
-                "Immediately grants 25 Sun for every zombie actually struck."
+                "Each zombie hit gives 25 Sun."
             }
         );
 
@@ -414,9 +471,53 @@ namespace PlantsPlus.Core
             stats: new[] { "Toughness", "300", "Boreal Wave", "Every 35s" },
             special: new[]
             {
-                "The wave remains across the full lane for the duration of the Boreal boost.",
+                "The wave boosts plants in its lane for 10 seconds.",
                 "Night plants in the lane gain 35% damage, Toughness, attack speed, production speed and movement speed.",
                 "Plantern receives the boost and generates Boreal Points instead of Lumos Points."
+            }
+        );
+
+        public static readonly AlmanacEntry BounceShroom = Plant(
+            "Bounce-shroom",
+            "Bounce-shroom tosses zombies that step on it about one and a half tiles back in a short arc, then rests.",
+            "Boing.",
+            "",
+            stats: new[] { "Toughness", "300", "Recharge", "Medium" },
+            special: new[]
+            {
+                "Bounces multiple zombies in its lane when they step on it.",
+                "Rests for 5 seconds between bounces.",
+                "Cannot be taken by Bungee Zombies."
+            }
+        );
+
+        public static readonly AlmanacEntry SuperaquaShroom = Plant(
+            "Superaqua-shroom",
+            "Superaqua-shroom fights at melee range and shares its icy energy with Super Sharpshooters.",
+            "A sharpened blade and a cold head make a powerful partnership.",
+            "",
+            "Advanced Alt",
+            stats: new[] { "Melee Damage", "40/1.5s", "Ice Charges", "Up to 15" },
+            special: new[]
+            {
+                "Its opening slash grants one ice charge to every Super Sharpshooter on the lawn and counters Green Signals.",
+                "Its own ice charges raise their firing speed by 4% each, up to 60%.",
+                "Gains ice charges when frozen or supplied by Firnurse, up to 15. Charged slashes deal extra damage and chill zombies."
+            },
+            conversion: "Spruce Sharpshooter <-> Sword-shroom"
+        );
+
+        public static readonly AlmanacEntry PulseShroom = Plant(
+            "Pulse-shroom",
+            "Pulse-shroom bounces intruders and sends a brief Boreal pulse through nearby night plants.",
+            "It insists that every bounce has an echo.",
+            "Bounce-shroom + Boreal Orchid",
+            stats: new[] { "Toughness", "450", "Recharge", "Medium" },
+            special: new[]
+            {
+                "Each successful bounce boosts night plants in the surrounding 3×3 for 10 seconds.",
+                "Each bounce has a 25% chance to release Boreal Orchid's full-lane wave.",
+                "Bounces zombies about one and a half tiles and rests for 5 seconds."
             }
         );
 
@@ -428,7 +529,7 @@ namespace PlantsPlus.Core
             stats: new[] { "Damage", "40/1.5s" },
             special: new[]
             {
-                "Hovering plant; safely avoids ground-level obstacles.",
+                "Flying plant.",
                 "Uses Cherryshooter projectiles. They do not explode on impact.",
                 "If the straight-shooting plant directly below attacks faster than once every 1.5 seconds, Bomber Drone matches its attack interval."
             }
@@ -442,7 +543,7 @@ namespace PlantsPlus.Core
             stats: new[] { "Damage", "20/1.5s" },
             special: new[]
             {
-                "Hovering plant; safely avoids ground-level obstacles.",
+                "Flying plant.",
                 "Fires Snow Pea projectiles that chill zombies.",
                 "If the straight-shooting plant directly below attacks faster than once every 1.5 seconds, Frostbite Drone matches its attack interval."
             }
@@ -519,6 +620,36 @@ namespace PlantsPlus.Core
             }
         );
 
+        public static readonly AlmanacEntry BumpingShroom = Plant(
+            "Bumping-shroom",
+            "Bumping-shroom bounces nearby zombies, then pelts them with three lobbed spores.",
+            "Bumping-shroom insists the three-story spring is perfectly stable. Nobody has volunteered to test the claim twice.",
+            "3 Lob-shrooms + Bounce-shroom",
+            stats: new[] { "Spore Damage", "20 x3", "Toughness", "600", "Rest", "5s" },
+            special: new[]
+            {
+                "Requires three Lob-shrooms stacked on the same tile before Bounce-shroom can fuse with them.",
+                "Bounces nearby ground zombies about 1.5 tiles back.",
+                "After bouncing, lobs a spore at each of the three nearest zombies in its lane.",
+                "Immune to Bungee Zombie and Catapult Zombie attacks."
+            }
+        );
+
+        public static readonly AlmanacEntry SparkShroom = Plant(
+            "Spark-shroom",
+            "Spark-shroom tosses zombies that step on it, then makes each tossed zombie discharge lightning into a nearby zombie.",
+            "Spark-shroom calls it conductive momentum. The zombies call it extremely rude.",
+            "Electronion + Bounce-shroom",
+            stats: new[] { "Lightning Damage", "100", "Toughness", "300", "Rest", "5s" },
+            special: new[]
+            {
+                "Bounces nearby ground zombies about 1.5 tiles back.",
+                "Each bounced zombie electrocutes the nearest other zombie in Electronion range.",
+                "The bounced zombie is never struck by its own discharge.",
+                "Cannot be taken by Bungee Zombies."
+            }
+        );
+
         public static readonly AlmanacEntry SauerkrautPult = Plant(
             "Sauerkraut-pult",
             "Sauerkraut-pult changes ammunition according to how far the target has advanced across the lawn.",
@@ -530,8 +661,56 @@ namespace PlantsPlus.Core
             {
                 "Focus Mode targets zombies 1-5 tiles from the house, dealing high single-target damage and inflicting Enflamed.",
                 "Splash Mode targets zombies 6-10 tiles from the house, dealing moderate area damage and inflicting Poison.",
-                "Uses a distinct projectile for each mode."
+                "Changes ammunition when switching modes."
             }
+        );
+
+        public static readonly AlmanacEntry SawMyPot = Plant(
+            "Saw-my-pot",
+            "Saw-my-pot boosts every Saw-me-not fusion planted on top of it.",
+            "Saw-my-pot likes helping the whole family stay sharp. Very, very sharp.",
+            "Saw-me-not + Flower Pot",
+            stats: new[] { "Damage Boost", "+50%" },
+            special: new[]
+            {
+                "Saw-me-not fusions planted on it deal 50% more damage."
+            }
+        );
+
+        public static readonly AlmanacEntry Bamboom = Plant(
+            "Bamboom", "Bamboom takes hits like Bamblock, heals from nearby Cherry Bomb blasts and explodes when defeated.",
+            "Bamboom has been put in charge of the fireworks. He's sorted the colours, checked the fuses and prepared a little speech. Nobody asked for the speech. He practises it anyway, very quietly, while everyone else counts backwards.",
+            "Bamblock + Cherry Bomb", stats: new[] { "Toughness", "1500" },
+            special: new[] {
+                "Keeps Bamblock's contact attacks and HP consumption.",
+                "Cherry Bomb explosions in the surrounding 3 x 3 restore 500 HP, up to his maximum.",
+                "Explodes for 1800 damage when defeated. Shovelling or fusing him does not trigger the blast."
+            });
+
+        public static readonly AlmanacEntry SolsticeShroom = Plant(
+            "Solstice-shroom", "Solstice-shroom bounces zombies and drops 25 Sun for each one launched.",
+            "Solstice-shroom has a long list of things to do on the longest day of the year. Breakfast in the garden, a swim, a picnic, then a walk before sunset. Every year he gets as far as breakfast. He's very fond of breakfast.",
+            "Bounce-shroom + Sunflower", stats: new[] { "Toughness", "300" },
+            special: new[] {
+                "Bounces nearby ground zombies on his row back 1.5 tiles. Rests for 5 seconds afterward.",
+                "Drops one 25-Sun pickup per zombie successfully bounced. Three zombies yield 75 Sun.",
+                "Does not produce Sun passively. Cannot be stolen by Bungee Zombies."
+            });
+
+        public static readonly AlmanacEntry VortexPot = Plant(
+            "Vortex Pot",
+            "Vortex Pot empowers Ice-shroom fusions and transforms plants placed on top of it.",
+            "Vortex Pot keeps every plant cool. Plants without an icy side tend to take that literally.",
+            "",
+            "Odyssey Mode | Epic Odyssey",
+            special: new[]
+            {
+                "Boosts Ice-shroom fusions planted on it.",
+                "Transforms a plant into its Ice-shroom fusion when one exists.",
+                "If no Ice-shroom fusion exists, freezes every zombie on the lawn.",
+                "Returns Roasted plants to their normal form, like Ice Pot."
+            },
+            conversion: "Shovel <-> Flower Pot"
         );
 
 #if ENABLE_MAGNETOPEA
@@ -543,7 +722,7 @@ namespace PlantsPlus.Core
             stats: new[] { "Damage", "20/1.5s" },
             special: new[]
             {
-                "Absorbs supported items placed directly on it and keeps the selected projectile until another item is supplied.",
+                "Absorbs items placed directly on it, without pulling them from a distance. Keeps its ammunition until given another item.",
                 "Bucket, Football Helmet and Chrono Disc select iron, helmet and portal peas.",
                 "Jack-in-the-box and Giga Mecha Fragments select explosive projectiles.",
                 "Deals ×2 damage to zombies that still carry metal equipment."

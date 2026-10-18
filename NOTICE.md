@@ -1,26 +1,11 @@
-# Notice
+# Notice — PvZ Fusion+ 1.3.0
 
-This repository contains the source code and custom resources for the fan-made **Plants+** mod.
+Fan-made content mod for Plants vs. Zombies Fusion 4.0.5.2, MelonLoader 0.7.3 and CustomizeLib.MelonLoader 4.0.5.2-ml.5.
 
-## Plants+ v1.2.1
+The base game, loader, CustomizeLib, generated game assemblies, local paths, user favorites and backups are not included in the release archive.
 
-Plants+ v1.2.1 is a compatibility hotfix for **Plants vs. Zombies Fusion 3.9**.
+Do not load older PlantsPlus.dll / PvZFusionPlus.dll copies alongside this version. Obtain CustomizeLib separately from its own releases.
 
-### Requirements
+Mod creator and concepts: Auro. Plant/fusion artwork: Red Reel, Retrosphere, Aris and Roshade. Original CustomizeLib: Infinite75. MelonLoader port: Hubtech280.
 
-- Plants vs. Zombies Fusion **3.9**
-- MelonLoader **0.7.3**
-- CustomizeLib.MelonLoader **3.9.0-ml.1**
-
-The base game, MelonLoader, CustomizeLib and generated game assemblies are not included in this source package and must be obtained separately.
-
-Do not load multiple versions of `PlantsPlus.dll` or CustomizeLib at the same time.
-
-### Version compatibility
-
-- Plants+ **v1.2.1** targets PvZ Fusion **3.9**.
-- Plants+ **v1.2.0** remains the compatible release for PvZ Fusion **3.8.1**.
-
-### Disclaimer
-
-Plants+ is a fan-made, unofficial mod. It is not affiliated with or endorsed by Electronic Arts, PopCap Games, or the PvZ Fusion developers. Plants vs. Zombies and related names belong to their respective owners.
+Plants vs. Zombies and related names belong to their respective owners. This unofficial fan mod is not affiliated with or endorsed by EA, PopCap Games or the PvZ Fusion developers. Existing rights and attribution are unchanged; no new license for third-party material is asserted.

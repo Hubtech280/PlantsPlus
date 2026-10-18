@@ -123,12 +123,31 @@ namespace PlantsPlus.Plants
     public sealed class LobShroom : MonoBehaviour
     {
         public const int ID = 6032;
+        private Cabbage? plant;
 
         public LobShroom(IntPtr pointer) : base(pointer) { }
 
         public void Start()
         {
+            plant = GetComponent<Cabbage>();
             Core.LobShroomBootstrap.Configure(gameObject);
+            CheckFusion();
+        }
+
+        public void Update()
+        {
+            CheckFusion();
+        }
+
+        private void CheckFusion()
+        {
+            if (plant == null || plant.dying || plant.thePlantHealth <= 0)
+                return;
+
+            BumpingFusionRunner.TryQueue(
+                plant.thePlantColumn,
+                plant.thePlantRow
+            );
         }
     }
 

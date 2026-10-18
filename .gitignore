@@ -25,3 +25,9 @@ Desktop.ini
 
 # Release archives
 *.zip
+artifacts/
+backups/
+deliverables/
+.pvzf_game_dir
+PlantsPlusData/
+PlantsPlusAudio/

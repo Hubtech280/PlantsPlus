@@ -1,106 +1,51 @@
-# Plants+
+# PvZ Fusion+ 1.3.0
 
-**Plants+** is a content mod for **Plants vs. Zombies Fusion 3.9**.
+[Français](README_FR.md)
 
-Version **1.2.1** is the PvZ Fusion 3.9 compatibility hotfix for the v1.2 release. It keeps the **32 custom plants** from v1.2.0 and updates their gameplay systems for the changes introduced in PvZ Fusion 3.9.
+More plants, new fusions and Night Roof content for **Plants vs. Zombies Fusion 4.0.5.2**.
 
-![Plants+ v1.2 logo](src/PlantsPlus/Resources/Sprites/plants_v1_2_logo.png)
-
-## Requirements
-
-- Plants vs. Zombies Fusion **3.9**
-- MelonLoader **0.7.3**
-- **CustomizeLib.MelonLoader 3.9.0-ml.1**
-
-> Plants+ **v1.2.1 targets PvZ Fusion 3.9**. If you remain on PvZ Fusion 3.8.1, use Plants+ v1.2.0 instead.
-
-## Plants included
-
-| ID | Plant | Type | Recipe / creation |
-|---:|---|---|---|
-| 6000 | Lotus Pumpkin | Basic Cross Fusion | Pumpkin + Snow Lotus |
-| 6001 | Bambnut | Basic Cross Fusion | Bamblock + Wall-nut |
-| 6002 | Magnet-o-pea | Basic Cross Fusion | Peashooter + Magnet-shroom |
-| 6003 | Iceberg-shroom | Basic Double Fusion | Ice-shroom + Ice-shroom |
-| 6004 | Witchfire Pumpkin | Weak Odyssey | Pyro Pumpkin + Doom Pumpkin |
-| 6005 | Nutty Sharpshooter | Basic Cross Fusion | Spruce Sharpshooter + Wall-nut |
-| 6006 | Inferno Torchflower | Advanced Alt | Infernowood + Sunflower |
-| 6007 | Pumpkin Podbomber | Advanced Alt | Explode-o-shooter + Pumpkin |
-| 6008 | Ceasarweed | Advanced Alt | Salad-pult + Spikeweed |
-| 6009 | Solar Firnace | Special Cross Fusion | Firnace absorbs the Sunflower below it |
-| 6010 | Not-a-pea | Basic Fusion | Saw-me-not + Peashooter |
-| 6011 | Not-a-storm Commando | Strong Odyssey | Saw-me-not + Pea-storm Commando |
-| 6012 | Frost Furflower | Advanced Fusion | Hoarfrost Lichen + Sunflower |
-| 6013 | Doomtronion | Electric Fusion | Amp-nion + Doom-shroom |
-| 6014 | Lichen-pea | Basic Fusion | Hoarfrost Lichen + Peashooter |
-| 6015 | Logic Blover | Harvest Red Card | Harvest-exclusive; no fusion recipe |
-| 6016 | Solar Sharpshooter | Basic Fusion | Spruce Sharpshooter + Sunflower |
-| 6017 | Sea Ballista | Aquatic Fusion | Spruce Ballista + Sea-shroom |
-| 6018 | Pineshooter | Basic Fusion | Peashooter + Spruce Sharpshooter |
-| 6019 | Icytronion | Electric Fusion | Amp-nion + Ice-shroom |
-| 6020 | Sea Sharpshooter | Aquatic Fusion | Spruce Sharpshooter + Sea-shroom |
-| 6021 | Cherry StarBomber | Epic Odyssey | Starfruit + Peashooter |
-| 6022 | Three-Buckpeater | Basic Fusion | Threepeater + Bucket |
-| 6023 | Sakura Sharpshooter | Basic Fusion | Cherry Bomb + Spruce Sharpshooter |
-| 6025 | Bomber Drone | Basic Fusion | Cherryshooter + Blover |
-| 6026 | Ice-Lord Cactus | Odyssey | Ice Cactus + Iceberg-shroom |
-| 6027 | Scovilia Pepper | Basic Fusion | Jalapeno + Jalapeno |
-| 6028 | Atomray-shroom | Odyssey | Plantern + Fume-shroom |
-| 6029 | Sauerkraut-pult | Odyssey | Garbage-pult + Pepper Popper |
-| 6030 | Cherry Cabbage | Basic Fusion | Cherry Bomb + Cabbage-pult |
-| 6031 | Frostbite Drone | Basic Fusion | Snow Pea + Blover |
-| 6032 | Lob-shroom | Basic Fusion | Stackable spore lobber |
-
-> **Boreal Orchid (ID 6024) is still delayed and is not included in Plants+ v1.2.1.**
-
-## What's new in v1.2.1
-
-v1.2.1 is primarily a **PvZ Fusion 3.9 compatibility hotfix**. It does not add a new custom plant.
-
-- Updated Plants+ for the projectile and movement changes in PvZ Fusion 3.9.
-- Updated zombie health handling for the larger health values used by 3.9.
-- Restored piercing, saw and lobbed-projectile behavior affected by the game update.
-- Fixed **Ice-Lord Cactus** anti-air shots so they keep the native Cactus air-targeting behavior.
-- Updated Odyssey modifier text presentation for PvZ Fusion 3.9.
-- Added the **Reaping Collision** Odyssey interaction for Grim Arbiter and Cryolina Reaper.
-- Added the **Excavator Obsidian Spike** skin integration for the native Obsidian Spike-nut.
-- Keeps all 32 custom plants and the v1.2 content from the previous release.
+![PvZ Fusion+](src/PlantsPlus/Resources/Branding/logo.png)
 
 ## Installation
 
-1. Install MelonLoader 0.7.3 for PvZ Fusion 3.9.
-2. Put `CustomizeLib.MelonLoader.dll` **v3.9.0-ml.1** in the game's `Mods` folder.
-3. Remove every older copy of `PlantsPlus.dll`.
-4. Put the Plants+ v1.2.1 `PlantsPlus.dll` in the game's `Mods` folder.
-5. Start the game and verify `Plants+ 1.2.1 loaded!` in the MelonLoader log.
+Requires PvZ Fusion **4.0.5.2**, MelonLoader **0.7.3**, and [CustomizeLib.MelonLoader **4.0.5.2-ml.5**](https://github.com/Hubtech280/CustomizeLib.Melonloader/releases/tag/v4.0.5.2-ml.5).
 
-Do not keep an older CustomizeLib build alongside the 3.9 build.
+1. Close the game. Install MelonLoader and run the game once if you have not already.
+2. Install the CustomizeLib version linked above, keeping only one copy.
+3. Remove old PlantsPlus.dll / PvZFusionPlus.dll copies from Mods.
+4. Download the mod ZIP from [Releases](https://github.com/Hubtech280/PlantsPlus/releases). Extract its Mods folder beside the game executable, or copy Mods/PvZFusionPlus.dll into the game's Mods folder.
+5. Start the game. The log should say **PvZ Fusion+ 1.3.0 loaded!**
 
-## Documentation
+The source-code ZIP is not the installable mod. The game, loader and CustomizeLib are not bundled.
 
-- [Plant mechanics](docs/PLANTS.md)
-- [Changelog](CHANGELOG.md)
-- [French README](README_FR.md)
-- [GitHub release template](docs/GITHUB_RELEASE_TEMPLATE.md)
+## What's included
+
+- 42 custom plant Almanac entries, including Bamboom and Solstice-shroom.
+- Night Roof Adventure content and Normal, Hard and Endless Survival entries.
+- Boreal Plants category and persistent Almanac favorites. Grey heart: not favorited; red heart: favorited.
+- English, French and Chinese mod text. With the optional translation mod, Fusion+ follows its selected language; without it, Fusion+ uses Chinese.
+- Language-specific logos and the mod's own changelog window.
+
+Bounce-shroom and its fusions may be planted **without pots** on Roof and Night Roof. Other plants keep their own support requirements. Bumping-shroom requires **three Lob-shrooms on one tile + Bounce-shroom**. Solstice-shroom is **Bounce-shroom + Sunflower** and drops **25 Sun per zombie successfully bounced**.
+
+Favorites are stored locally in Mods/PlantsPlusData/favorites.txt; extracted music is cached in Mods/PlantsPlusAudio. Neither folder is bundled. Keep your favorites file when updating.
+
+The larger planned Adventure/menu reworks are **not** included.
+
+## Known issue
+
+ArgumentOutOfRangeException messages have been observed in zombie damage/armor-loss paths, including Zombie.AnimLoseActive and Zombie.FirstArmorFall. No visible gameplay problem was reported during that test, but the cause and impact have not been established. This release does not claim those errors are fixed.
 
 ## Building
 
-The project targets `.NET 6` and references the assemblies generated by MelonLoader.
+Requires Windows, a .NET SDK able to target .NET 6, and a local game installation with generated MelonLoader/Il2CppAssemblies. Game assemblies are not redistributed.
 
-Run `BUILD_RELEASE.bat` and select your PvZ Fusion 3.9 directory. The script builds Plants+, creates the release archive, generates the binary hash, and can install the resulting DLL into the game's `Mods` folder.
+Run BUILD_RELEASE.bat with the game directory as its argument, or run tools/build_release.ps1 -GameDirectory "C:\Path\To\Game Files". The builder compiles the mod, runs offline text/metadata/favorites checks and creates a ZIP with checksums under artifacts. It never launches the game or installs the DLL. Offline checks do not replace gameplay tests.
 
-Game assemblies and CustomizeLib are not redistributed in this repository.
+## Bugs and credits
 
-## Reporting bugs
+[Report a bug](https://github.com/Hubtech280/PlantsPlus/issues) with game, library and mod versions, reproduction steps and the full MelonLoader/Latest.log. Review personal paths before posting logs publicly.
 
-Open an issue and attach the complete MelonLoader log. Include the affected plant or mechanic and the exact steps that produced the problem.
+Mod creator and concepts: **Auro**. Plant/fusion artwork: **Red Reel, Retrosphere, Aris and Roshade**. Original CustomizeLib: **Infinite75**; MelonLoader port: **Hubtech280**.
 
-## Credits
-
-- Mod creator and plant concepts: **Auro**
-- Plant and fusion artwork: **Red Reel**, **Retrosphere**, **Aris** and **Roshade**
-- Built for the PvZ Fusion modding community using CustomizeLib
-
-## Disclaimer
-
-Plants+ is a fan-made, unofficial mod. It is not affiliated with or endorsed by Electronic Arts, PopCap Games, or the PvZ Fusion developers. Plants vs. Zombies and related names belong to their respective owners.
+See [release notes](GITHUB_RELEASE_NOTES.md), [changelog](CHANGELOG.md) and [notice](NOTICE.md). Unofficial fan mod, not affiliated with EA, PopCap or the PvZ Fusion developers.

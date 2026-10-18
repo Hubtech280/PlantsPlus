@@ -10,16 +10,13 @@ namespace PlantsPlus.Core
     internal static class BorealOrchidBootstrap
     {
         private static bool registered;
-        private static GameObject? wavePrefab;
-        private static Vector3 waveWorldScale = Vector3.one;
-        private static float waveVerticalOffset;
+        private static bool hasWaveVisual;
+        private static Transform? waveTemplate;
 
         internal static void OnStart()
         {
             if (registered)
                 return;
-
-            registered = true;
 
             try
             {
@@ -31,37 +28,18 @@ namespace PlantsPlus.Core
                     bundle?.GetAsset<GameObject>("SunflowerPrefab");
                 GameObject? preview =
                     bundle?.GetAsset<GameObject>("SunflowerPreview");
-                wavePrefab = null;
+                hasWaveVisual = false;
 
                 if (prefab != null)
                 {
-                    SpriteRenderer[] renderers =
-                        prefab.GetComponentsInChildren<SpriteRenderer>(true);
-
-                    for (int index = 0; index < renderers.Length; index++)
-                    {
-                        SpriteRenderer renderer = renderers[index];
-                        if (renderer != null &&
-                            renderer.gameObject.name.Equals(
-                                "BorealWave",
-                                StringComparison.OrdinalIgnoreCase
-                            ))
-                        {
-                            // BorealWave is embedded as a disabled child of
-                            // SunflowerPrefab, not as a top-level bundle asset.
-                            // Keep that authored object as the visual template.
-                            wavePrefab = renderer.gameObject;
-                            waveWorldScale = renderer.transform.lossyScale;
-                            waveVerticalOffset =
-                                renderer.transform.localPosition.y *
-                                prefab.transform.localScale.y;
-                            break;
-                        }
-                    }
+                    Transform? waveRoot = prefab.transform.Find("BorealWave");
+                    waveTemplate = waveRoot;
+                    hasWaveVisual = waveRoot != null &&
+                        waveRoot.GetComponentsInChildren<SpriteRenderer>(true).Length > 0;
                 }
 
                 if (bundle == null || prefab == null || preview == null ||
-                    wavePrefab == null)
+                    !hasWaveVisual)
                 {
                     throw new InvalidOperationException(
                         "Boreal Orchid bundle, SunflowerPrefab, " +
@@ -105,6 +83,9 @@ namespace PlantsPlus.Core
                     Plants.BorealOrchid.CardCost
                 );
 
+                InstallTypeFlags();
+                registered = true;
+
                 Plugin.Logger.LogInfo(
                     "[Boreal Orchid] Registered" +
                     " | Plant ID = " + Plants.BorealOrchid.BorealOrchidID +
@@ -124,33 +105,47 @@ namespace PlantsPlus.Core
 
         internal static void OnGameInit()
         {
+            InstallTypeFlags();
             AlmanacCompatibility.RefreshLoadedData();
+        }
+
+        private static void InstallTypeFlags()
+        {
+            PlantType type = (PlantType)Plants.BorealOrchid.BorealOrchidID;
+            if (CoreEnums.baiscPlants != null &&
+                !CoreEnums.baiscPlants.Contains(type))
+                CoreEnums.baiscPlants.Add(type);
+            TypeData.SpecialCardPlants?.Remove(type);
+        }
+
+        internal static void AttachWaveVisual(GameObject target)
+        {
+            if (target == null || waveTemplate == null ||
+                target.transform.Find("BorealWave") != null)
+                return;
+            GameObject clone = UnityEngine.Object.Instantiate(
+                waveTemplate.gameObject, target.transform);
+            clone.name = "BorealWave";
+            clone.SetActive(false);
         }
 
         internal static void SpawnWaveVisual(Plant source)
         {
-            if (source == null || wavePrefab == null)
+            if (source == null || !hasWaveVisual)
                 return;
+
+            Transform? waveTransform = source.transform.Find("BorealWave");
+            if (waveTransform == null)
+                return;
+            GameObject wave = waveTransform.gameObject;
 
             Board? board = Board.Instance;
             int columns = board != null
                 ? Math.Max(1, board.columnNum)
                 : 9;
-            int rows = board != null
-                ? Math.Max(1, board.rowNum)
-                : 5;
-
             float firstColumnX = Lawnf.GetBoxXFromColumn(0);
             float lastColumnX =
                 Lawnf.GetBoxXFromColumn(columns - 1);
-            float rowY = Lawnf.GetBoxYFromRow(
-                source.thePlantRow,
-                rows
-            );
-
-            GameObject wave = UnityEngine.Object.Instantiate(wavePrefab);
-            if (wave == null)
-                return;
 
             SpriteRenderer[] waveRenderers =
                 wave.GetComponentsInChildren<SpriteRenderer>(true);
@@ -158,16 +153,15 @@ namespace PlantsPlus.Core
                 waveRenderers[0] == null ||
                 waveRenderers[0].sprite == null)
             {
-                UnityEngine.Object.Destroy(wave);
                 return;
             }
 
-            SpriteRenderer renderer = waveRenderers[0];
+            wave.SetActive(true);
 
             SpriteRenderer[] plantRenderers =
                 source.GetComponentsInChildren<SpriteRenderer>(true);
             int highestPlantOrder = 0;
-            int plantSortingLayer = renderer.sortingLayerID;
+            int plantSortingLayer = waveRenderers[0].sortingLayerID;
 
             for (int index = 0; index < plantRenderers.Length; index++)
             {
@@ -205,37 +199,34 @@ namespace PlantsPlus.Core
             float laneMinX = firstColumnX - columnSpacing * 2.5f;
             float laneMaxX = lastColumnX + columnSpacing * 2.5f;
 
-            float targetLaneWidth = Mathf.Abs(laneMaxX - laneMinX);
-            float authoredWorldWidth =
-                renderer.sprite.bounds.size.x * Mathf.Abs(waveWorldScale.x);
-            float horizontalScaleMultiplier = authoredWorldWidth > 0.001f
-                ? targetLaneWidth / authoredWorldWidth
-                : 1f;
+            // The new animation targets the BorealWave children under the
+            // plant Animator. Keep that hierarchy intact while sizing it.
+            Bounds visualBounds = waveRenderers[0].bounds;
+            for (int index = 1; index < waveRenderers.Length; index++)
+                if (waveRenderers[index] != null)
+                    visualBounds.Encapsulate(waveRenderers[index].bounds);
+            if (visualBounds.size.x > 0.001f)
+            {
+                Vector3 scale = waveTransform.localScale;
+                scale.x *= Mathf.Abs(laneMaxX - laneMinX) /
+                    visualBounds.size.x;
+                waveTransform.localScale = scale;
+            }
+            visualBounds = waveRenderers[0].bounds;
+            for (int index = 1; index < waveRenderers.Length; index++)
+                if (waveRenderers[index] != null)
+                    visualBounds.Encapsulate(waveRenderers[index].bounds);
+            waveTransform.position += new Vector3(
+                (laneMinX + laneMaxX) * 0.5f - visualBounds.center.x,
+                0f, 0f);
 
-            wave.transform.localScale = new Vector3(
-                waveWorldScale.x * horizontalScaleMultiplier,
-                waveWorldScale.y,
-                waveWorldScale.z
-            );
-
-            // BorealWave is the complete lane-wide visual authored in the
-            // bundle. It appears centered on the row, remains stationary for
-            // the effect animation, then disappears; it is not a projectile.
-            Vector3 laneCenter = new Vector3(
-                (laneMinX + laneMaxX) * 0.5f,
-                rowY + waveVerticalOffset,
-                source.transform.position.z
-            );
-
-            wave.transform.position = laneCenter;
-            wave.SetActive(true);
-
-            Plants.BorealWaveRuntime runtime =
-                wave.AddComponent<Plants.BorealWaveRuntime>();
-            runtime.Initialize(
-                laneCenter,
-                Plants.BorealOrchid.BoostDuration
-            );
+            Plants.BorealWaveRuntime? runtime =
+                wave.GetComponent<Plants.BorealWaveRuntime>();
+            if (runtime == null)
+                runtime = wave.AddComponent<Plants.BorealWaveRuntime>();
+            runtime.Initialize(waveTransform.position,
+                Plants.BorealOrchid.WaveAnimationDuration,
+                (int)source.thePlantType == Plants.PulseShroom.ID);
         }
     }
 
@@ -257,7 +248,13 @@ namespace PlantsPlus.Core
             PlantType.ScaredyShroom,
             PlantType.IceShroom,
             PlantType.DoomShroom,
-            PlantType.Gravebuster
+            PlantType.Gravebuster,
+            (PlantType)Plants.BorealOrchid.BorealOrchidID,
+            (PlantType)Plants.LobShroom.ID,
+            PlantType.ElectricOnion,
+            (PlantType)Plants.BounceShroom.ID,
+            (PlantType)Plants.PulseShroom.ID,
+            (PlantType)Plants.SuperaquaShroom.ID
         };
 
         private static readonly Dictionary<int, Action<Plant>> SpecialEffects =
@@ -350,6 +347,39 @@ namespace PlantsPlus.Core
             );
         }
 
+        internal static void TriggerPulse(Plant source)
+        {
+            if (source == null)
+                return;
+            EnsureBoardState();
+            var plants = Lawnf.GetAllPlants();
+            if (plants == null)
+                return;
+
+            for (int index = 0; index < plants.Count; index++)
+            {
+                Plant target = plants[index];
+                if (target == null || target.dying ||
+                    Math.Abs(target.thePlantColumn -
+                        source.thePlantColumn) > 1 ||
+                    Math.Abs(target.thePlantRow -
+                        source.thePlantRow) > 1 ||
+                    !IsNightPlant(target.thePlantType))
+                    continue;
+
+                Plants.BorealBoostMarker? marker =
+                    target.GetComponent<Plants.BorealBoostMarker>();
+                if (marker == null)
+                    marker = target.gameObject.AddComponent<
+                        Plants.BorealBoostMarker>();
+                marker.Apply(target, StatMultiplier,
+                    Plants.BorealOrchid.BoostDuration);
+                if (SpecialEffects.TryGetValue((int)target.thePlantType,
+                    out Action<Plant>? special))
+                    special(target);
+            }
+        }
+
         private static void EnsureBoardState()
         {
             Board? board = Board.Instance;
@@ -360,7 +390,7 @@ namespace PlantsPlus.Core
             BorealPoints = 0;
         }
 
-        private static bool IsNightPlant(PlantType type)
+        internal static bool IsNightPlant(PlantType type)
         {
             return IsNightPlant(type, new HashSet<int>(), 0);
         }
@@ -405,11 +435,11 @@ namespace PlantsPlus.Core
                     }
                 }
 
-                if (!MixData.TryGetDisMix(type, out var parents))
-                    return false;
-
-                return IsNightPlant(parents.Item1, visited, depth + 1) ||
-                    IsNightPlant(parents.Item2, visited, depth + 1);
+                // Native MixData returns an IL2CPP ValueTuple. Reading Item1/2
+                // can box an invalid native PlantType pointer and terminate the
+                // whole game with AccessViolationException (not catchable here).
+                // Only traverse the managed custom-fusion registry at runtime.
+                return false;
             }
             catch
             {
@@ -506,17 +536,29 @@ namespace PlantsPlus.Plants
     {
         private float duration;
         private float elapsed;
+        private bool manualAnimation;
+        private Vector3 fullScale;
+        private SpriteRenderer[]? renderers;
 
         public BorealWaveRuntime(IntPtr pointer) : base(pointer) { }
 
         internal void Initialize(
             Vector3 lanePosition,
-            float lifetime
+            float lifetime,
+            bool animateManually = false
         )
         {
             duration = Mathf.Max(0.1f, lifetime);
             elapsed = 0f;
             transform.position = lanePosition;
+            manualAnimation = animateManually;
+            if (manualAnimation)
+            {
+                fullScale = transform.localScale;
+                renderers = GetComponentsInChildren<SpriteRenderer>(true);
+                transform.localScale = new Vector3(
+                    fullScale.x * 0.05f, fullScale.y, fullScale.z);
+            }
 
             SpriteRenderer? spriteRenderer = GetComponent<SpriteRenderer>();
             if (spriteRenderer != null)
@@ -526,8 +568,28 @@ namespace PlantsPlus.Plants
         public void Update()
         {
             elapsed += Time.deltaTime;
+            if (manualAnimation)
+            {
+                float progress = Mathf.Clamp01(elapsed / duration);
+                transform.localScale = new Vector3(
+                    fullScale.x * Mathf.Lerp(0.05f, 1f,
+                        Mathf.SmoothStep(0f, 1f,
+                            Mathf.Min(1f, progress * 2f))),
+                    fullScale.y, fullScale.z);
+                if (renderers != null)
+                {
+                    float alpha = Mathf.Clamp01((1f - progress) * 3f);
+                    foreach (SpriteRenderer renderer in renderers)
+                        if (renderer != null)
+                        {
+                            Color color = renderer.color;
+                            color.a = alpha;
+                            renderer.color = color;
+                        }
+                }
+            }
             if (elapsed >= duration)
-                UnityEngine.Object.Destroy(gameObject);
+                gameObject.SetActive(false);
         }
     }
 

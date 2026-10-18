@@ -61,6 +61,6 @@ body:
     id: log
     attributes:
       label: MelonLoader log
-      description: Drag the full Latest.log file here. The log should contain `Plants+ 1.0.0-release-ml.3 loaded!`.
+      description: Attach the full Latest.log (review personal paths first). The log should contain `PvZ Fusion+ 1.3.0 loaded!`.
     validations:
       required: true

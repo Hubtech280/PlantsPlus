@@ -8,7 +8,31 @@ namespace PlantsPlus.Core
 {
     internal static class NightRoofTestLevel
     {
+        internal const int FirstLevel = 46;
+        internal const int LevelCount = 4;
+        private static readonly int[] RegisteredIds = { -1, -1, -1, -1 };
         private static bool registered;
+        internal static int RegisteredId => RegisteredIds[0];
+
+        internal static int GetRegisteredId(int levelNumber)
+        {
+            int index = levelNumber - FirstLevel;
+            return index >= 0 && index < RegisteredIds.Length
+                ? RegisteredIds[index]
+                : -1;
+        }
+
+        internal static PlantType GetFeaturedPlant(int levelNumber)
+        {
+            return levelNumber switch
+            {
+                46 => (PlantType)Plants.BorealOrchid.BorealOrchidID,
+                47 => (PlantType)Plants.LobShroom.ID,
+                48 => PlantType.ElectricOnion,
+                49 => (PlantType)Plants.BounceShroom.ID,
+                _ => (PlantType)Plants.BorealOrchid.BorealOrchidID
+            };
+        }
 
         internal static void OnStart()
         {
@@ -35,7 +59,7 @@ namespace PlantsPlus.Core
 
                 var level = new CustomLevelData
                 {
-                    Name = () => "Night Roof - Test",
+                    Name = () => "夜间屋顶 1",
                     Logo = logo,
                     SceneType = SceneType.NightRoof,
                     BgmType = MusicType.Roof,
@@ -43,7 +67,7 @@ namespace PlantsPlus.Core
                     RowCount = 5,
                     NeedSelectCard = true,
                     Sun = () => 1000,
-                    WaveCount = () => 5,
+                    WaveCount = () => 10,
                     ZombieHealthRate = () => 1,
                     ZombieList = () => new List<ZombieType>
                     {
@@ -53,17 +77,36 @@ namespace PlantsPlus.Core
                     },
                     PreSelectCards = () => new List<PlantType>
                     {
-                        (PlantType)Plants.LobShroom.ID
+                        (PlantType)Plants.BorealOrchid.BorealOrchidID
                     }
                 };
 
-                int id = CustomCore.RegisterCustomLevel(level);
+                for (int index = 0; index < LevelCount; index++)
+                {
+                    int chapterIndex = index;
+                    int levelNumber = FirstLevel + index;
+                    PlantType featured = GetFeaturedPlant(levelNumber);
+                    level.Name = () => "夜间屋顶 " +
+                        (chapterIndex + 1);
+                    // The native progress bar counts flags in groups of ten.
+                    // Fewer waves showed "0 flags" and never had a real final flag.
+                    level.WaveCount = () => 10;
+                    level.ZombieList = () => GetZombies(chapterIndex);
+                    level.PreSelectCards = () => new List<PlantType>
+                    {
+                        featured
+                    };
+                    level.PostBoard = board => NightRoofMoon.Attach(board);
+                    RegisteredIds[index] =
+                        CustomCore.RegisterCustomLevel(level);
+                    Plugin.Logger.LogInfo(
+                        "[Night Roof] Level " + levelNumber +
+                        " registered | Custom ID = " +
+                        RegisteredIds[index] +
+                        " | Featured plant = " + featured
+                    );
+                }
                 registered = true;
-                Plugin.Logger.LogInfo(
-                    "[Night Roof Test] Registered simple 5-wave level" +
-                    " | ID = " + id +
-                    " | Zombies = Normal, Cone, Bucket"
-                );
             }
             catch (Exception exception)
             {
@@ -72,6 +115,23 @@ namespace PlantsPlus.Core
                     exception
                 );
             }
+        }
+
+        private static List<ZombieType> GetZombies(int chapterIndex)
+        {
+            var zombies = new List<ZombieType>
+            {
+                ZombieType.NormalZombie,
+                ZombieType.ConeZombie,
+                ZombieType.BucketZombie
+            };
+            if (chapterIndex >= 1)
+                zombies.Add(ZombieType.PolevaulterZombie);
+            if (chapterIndex >= 2)
+                zombies.Add(ZombieType.PaperZombie);
+            if (chapterIndex >= 3)
+                zombies.Add(ZombieType.CatapultZombie);
+            return zombies;
         }
     }
 }

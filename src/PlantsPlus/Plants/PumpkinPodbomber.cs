@@ -891,7 +891,7 @@ namespace PlantsPlus.Plants
 
         [HarmonyPatch(
             typeof(AlmanacPlantMenu.__c),
-            "_LookSuper_b__19_0"
+            "_LookSuper_b__23_0"
         )]
         private static class AlmanacPlantMenu_LookSuper_Filter_Patch
         {

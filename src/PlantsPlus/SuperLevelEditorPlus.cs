@@ -54,7 +54,7 @@ namespace PlantsPlus.Core
             [SceneType.Roof] = new SceneVisual(
                 "Roof", PlantType.Cabbagepult, null, 310),
             [SceneType.NightRoof] = new SceneVisual(
-                "NightRoof", (PlantType)Plants.LobShroom.ID, null, 310),
+                "NightRoof", (PlantType)Plants.BorealOrchid.BorealOrchidID, null, 310),
             [SceneType.Travel_roof] = new SceneVisual(
                 "Roof", PlantType.Melonpult, null, 310),
             [SceneType.Travel_roof_dusk] = new SceneVisual(
@@ -155,7 +155,7 @@ namespace PlantsPlus.Core
                 {
                     MapData_cs.SceneName.Add(
                         SceneType.NightRoof,
-                        "Night Roof"
+                        LocalizationBridge.Select("夜间屋顶", "Night Roof", "Toit nocturne")
                     );
                 }
 
@@ -164,7 +164,7 @@ namespace PlantsPlus.Core
                 {
                     MapData_cs.SceneName.Add(
                         SceneType.NightWinter,
-                        "Christmas Snow"
+                        LocalizationBridge.Select("圣诞雪地", "Christmas Snow", "Neige de Noël")
                     );
                 }
 
@@ -242,7 +242,7 @@ namespace PlantsPlus.Core
                     buttons,
                     template,
                     SceneType.NightRoof,
-                    "Night Roof",
+                    LocalizationBridge.Select("夜间屋顶", "Night Roof", "Toit nocturne"),
                     "PlantsPlus_NightRoofScene"
                 );
                 EnsureSceneButton(
@@ -250,7 +250,7 @@ namespace PlantsPlus.Core
                     buttons,
                     template,
                     SceneType.NightWinter,
-                    "Christmas Snow",
+                    LocalizationBridge.Select("圣诞雪地", "Christmas Snow", "Neige de Noël"),
                     "PlantsPlus_ChristmasSnowScene"
                 );
             }
@@ -309,6 +309,11 @@ namespace PlantsPlus.Core
         internal static Sprite? GetNightRoofPreview()
         {
             return GetBackgroundSprite("NightRoof", 310);
+        }
+
+        internal static Sprite? GetClassicNightPreview()
+        {
+            return GetBackgroundSprite("Night", 310);
         }
 
         internal static void DecorateCurrentScene(CustomMenu menu)

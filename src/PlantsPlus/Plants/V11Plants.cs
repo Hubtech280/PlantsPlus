@@ -1308,9 +1308,26 @@ namespace PlantsPlus.Core
             }
 
             bullet.theBulletType = customType;
-            bullet.Damage = source.attackDamage > 0
+            int shotDamage = source.attackDamage > 0
                 ? source.attackDamage
                 : fallbackDamage;
+
+            // Saw-my-pot is a v1.3 support pot. Not-a-pea and
+            // Not-a-storm Commando spawn their custom saw bullets directly
+            // instead of passing through Plant.GetDamage(), so apply the same
+            // +50% family bonus here as the global native-damage bridge.
+            if (
+                V13DoublePotsBootstrap.IsSawFamily(source) &&
+                V13DoublePotsBootstrap.HasSawMyPotUnder(source)
+            )
+            {
+                shotDamage = Mathf.Max(
+                    1,
+                    Mathf.RoundToInt(shotDamage * 1.5f)
+                );
+            }
+
+            bullet.Damage = shotDamage;
             bullet.shootingLevel = source.shootingLevel;
             bullet.from = source;
             bullet.fromType = sourceType;

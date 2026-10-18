@@ -1,7 +1,7 @@
 using System.Reflection;
 
-[assembly: AssemblyTitle("PlantsPlus")]
-[assembly: AssemblyProduct("PlantsPlus")]
-[assembly: AssemblyVersion("1.2.1.0")]
-[assembly: AssemblyFileVersion("1.2.1.0")]
-[assembly: AssemblyInformationalVersion("1.2.1")]
+[assembly: AssemblyTitle("PvZ Fusion+")]
+[assembly: AssemblyProduct("PvZ Fusion+")]
+[assembly: AssemblyVersion("1.3.0.6")]
+[assembly: AssemblyFileVersion("1.3.0.6")]
+[assembly: AssemblyInformationalVersion("1.3.0")]

@@ -1,11 +1,12 @@
 {
-  "release": "Plants+ v1.2.1",
-  "melonloader_build_string": "1.2.1",
-  "target_game": "Plants vs. Zombies Fusion 3.9",
+  "release": "PvZ Fusion+ 1.3.0",
+  "melonloader_build_string": "1.3.0",
+  "target_game": "Plants vs. Zombies Fusion 4.0.5.2",
   "target_loader": "MelonLoader 0.7.3",
-  "customize_lib": "CustomizeLib.MelonLoader 3.9.0-ml.1",
+  "customize_lib": "CustomizeLib.MelonLoader 4.0.5.2-ml.5",
   "binary_size": null,
   "binary_sha256": null,
-  "source_status": "Source prepared for the PvZ Fusion 3.9 compatibility hotfix.",
-  "binary_status": "Run BUILD_RELEASE.bat to build the final binary and generate release metadata."
+  "source_status": "Release based on author-tested alpha.46; no additional gameplay changes.",
+  "binary_status": "Run BUILD_RELEASE.bat with the game directory to generate the archive and manifest with exact hashes.",
+  "known_issue": "Zombie damage/armor-loss ArgumentOutOfRangeException reports remain unresolved."
 }

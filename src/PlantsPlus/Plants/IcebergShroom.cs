@@ -449,9 +449,16 @@ namespace PlantsPlus.Plants
         [HarmonyPatch(typeof(Zombie), nameof(Zombie.UpdateSpeed))]
         private static class Zombie_UpdateSpeed_Patch
         {
+            [ThreadStatic]
+            private static bool applyingSlow;
+
             [HarmonyPostfix]
             private static void Postfix(Zombie __instance)
             {
+                if (applyingSlow)
+                    return;
+
+                applyingSlow = true;
                 try
                 {
                     IcebergForcedSlow? slow =
@@ -463,6 +470,10 @@ namespace PlantsPlus.Plants
                 catch
                 {
                     // Speed updates must never be allowed to break a zombie.
+                }
+                finally
+                {
+                    applyingSlow = false;
                 }
             }
         }

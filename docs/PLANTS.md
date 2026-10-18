@@ -1,4 +1,6 @@
-# Plant mechanics
+# Archived plant mechanics (1.2.x)
+
+This document preserves the older roster. For 1.3.0, use the in-game Almanac (42 custom entries) and the current README/release notes; recipes and balance below may be outdated.
 
 ## Lotus Pumpkin — 6000
 

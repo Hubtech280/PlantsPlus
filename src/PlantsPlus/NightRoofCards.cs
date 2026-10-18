@@ -38,6 +38,8 @@ namespace PlantsPlus.Core
         private static float nextNormalRepairAttempt;
         private static SeedLibrary? warnedMissingNormalLibrary;
         private static bool almanacScrollRepairWarningLogged;
+        private static bool adventureRoleSwapLogged;
+        private static Transform? configuredSandboxRoleSwapRoot;
 
         internal static void OnStart()
         {
@@ -51,26 +53,26 @@ namespace PlantsPlus.Core
                 EnsureCardSprite();
                 InstallNativeClassification();
 
-                // CustomizeLib appends normal cards immediately after the
-                // native AdventureCardLayout. Frozen Giftbox is the last
-                // native entry, so Electronion becomes the first card on
-                // the following line/page instead of a Unique Plant.
+                // CustomizeLib registers these as normal cards. After its
+                // native card creation finishes, the 4.0 pagination repair
+                // places them after Roof on page 1.
                 // CustomizeLib adds one to repeatTime on normal boards.
                 // Passing its default value (1) therefore creates two
                 // complete pairs: two regular cards and two Carbon Copies.
                 // Zero is the value that creates exactly the native pair.
                 CustomCore.RegisterCustomNormalCard(
-                    (PlantType)Plants.LobShroom.ID,
-                    0
-                );
+                    (PlantType)Plants.BorealOrchid.BorealOrchidID, 0);
+                CustomCore.RegisterCustomNormalCard(
+                    (PlantType)Plants.LobShroom.ID, 0);
                 CustomCore.RegisterCustomNormalCard(
                     PlantType.ElectricOnion,
                     0
                 );
+                CustomCore.RegisterCustomNormalCard((PlantType)Plants.BounceShroom.ID, 0);
 
                 Plugin.Logger.LogInfo(
-                    "[Night Roof] Lob-shroom and Electronion registered " +
-                    "as normal Adventure plants after Frozen Giftbox."
+                    "[Night Roof] Four plants registered as normal " +
+                    "Adventure cards; pagination repair follows Roof."
                 );
             }
             catch (Exception exception)
@@ -84,6 +86,13 @@ namespace PlantsPlus.Core
 
         private static void InstallNativeClassification()
         {
+            foreach (PlantType type in new[] { (PlantType)Plants.BorealOrchid.BorealOrchidID,
+                (PlantType)Plants.LobShroom.ID, PlantType.ElectricOnion, (PlantType)Plants.BounceShroom.ID })
+            {
+                if (CoreEnums.baiscPlants != null && !CoreEnums.baiscPlants.Contains(type))
+                    CoreEnums.baiscPlants.Add(type);
+                TypeData.SpecialCardPlants?.Remove(type);
+            }
             // These are the two native classifiers used throughout the
             // game, including Almanac filters. Electronion starts in the
             // special/colourful set; registering a CustomizeLib card alone
@@ -111,6 +120,8 @@ namespace PlantsPlus.Core
                 TypeData.SpecialCardPlants.Remove(lob);
             }
 
+            InstallAdventureRoleSwap();
+
             Plugin.Logger.LogInfo(
                 "[Night Roof] Native classification repaired" +
                 " | Basic = " +
@@ -125,6 +136,193 @@ namespace PlantsPlus.Core
             );
         }
 
+        internal static void OnGameInit()
+        {
+            // The game can rebuild these native sets while loading resources.
+            InstallAdventureRoleSwap();
+        }
+
+        private static void InstallAdventureRoleSwap()
+        {
+            try
+            {
+                if (CoreEnums.baiscPlants != null)
+                {
+                    CoreEnums.baiscPlants.Remove(PlantType.Present);
+                    CoreEnums.baiscPlants.Remove(PlantType.PresentZombie);
+                    CoreEnums.baiscPlants.Add(PlantType.EndoFlame);
+                    CoreEnums.baiscPlants.Add(PlantType.Gravebuster);
+                }
+
+                if (TypeData.WhiteCardPlants != null)
+                {
+                    TypeData.WhiteCardPlants.Remove(PlantType.EndoFlame);
+                    TypeData.WhiteCardPlants.Remove(PlantType.Gravebuster);
+                    TypeData.WhiteCardPlants.Add(PlantType.Present);
+                    TypeData.WhiteCardPlants.Add(PlantType.PresentZombie);
+                }
+
+                if (TypeData.SpecialCardPlants != null)
+                {
+                    TypeData.SpecialCardPlants.Remove(PlantType.EndoFlame);
+                    TypeData.SpecialCardPlants.Remove(PlantType.Gravebuster);
+                    TypeData.SpecialCardPlants.Add(PlantType.Present);
+                    TypeData.SpecialCardPlants.Add(PlantType.PresentZombie);
+                }
+
+                if (!adventureRoleSwapLogged)
+                {
+                    adventureRoleSwapLogged = true;
+                    Plugin.Logger.LogInfo(
+                        "[Adventure Cards] Native roles swapped" +
+                        " | Basic = Endoflame, Gravebuster" +
+                        " | White = Plant Giftbox, Zombie Giftbox"
+                    );
+                }
+            }
+            catch (Exception exception)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Adventure Cards] Role swap failed safely: " +
+                    exception.Message
+                );
+            }
+        }
+
+        internal static PlantType SwapAdventureCardType(PlantType type)
+        {
+            return type switch
+            {
+                PlantType.Present => PlantType.EndoFlame,
+                PlantType.EndoFlame => PlantType.Present,
+                PlantType.PresentZombie => PlantType.Gravebuster,
+                PlantType.Gravebuster => PlantType.PresentZombie,
+                _ => type
+            };
+        }
+
+        internal static void ApplyAdventureCardSwap(CardUI card)
+        {
+            if (card == null)
+                return;
+
+            PlantType original = card.thePlantType;
+            PlantType replacement = SwapAdventureCardType(original);
+            if (replacement == original)
+                return;
+
+            card.thePlantType = replacement;
+            card.theSeedType = (int)replacement;
+
+            try
+            {
+                PlantDataManager.PlantData data =
+                    PlantDataManager.GetPlantData(replacement);
+                if (data != null)
+                {
+                    card.theSeedCost = data.cost;
+                    card.fullCD = data.cd;
+                    card.CD = data.cd;
+                }
+            }
+            catch { }
+
+            card.ChangeCardSprite();
+        }
+
+        internal static void RepairSandboxAdventureRoleSwap(
+            GameObject plantLibrary
+        )
+        {
+            if (plantLibrary == null || plantLibrary.transform == null)
+                return;
+
+            Transform root = plantLibrary.transform;
+            if (configuredSandboxRoleSwapRoot == root)
+                return;
+
+            try
+            {
+                CardUI[] cards =
+                    root.GetComponentsInChildren<CardUI>(true);
+
+                bool hasEndoflame = false;
+                bool hasPlantGiftbox = false;
+                bool hasGravebuster = false;
+                bool hasZombieGiftbox = false;
+
+                for (int index = 0; index < cards.Length; index++)
+                {
+                    CardUI card = cards[index];
+                    if (card == null)
+                        continue;
+
+                    switch (card.thePlantType)
+                    {
+                        case PlantType.EndoFlame:
+                            hasEndoflame = true;
+                            break;
+                        case PlantType.Present:
+                            hasPlantGiftbox = true;
+                            break;
+                        case PlantType.Gravebuster:
+                            hasGravebuster = true;
+                            break;
+                        case PlantType.PresentZombie:
+                            hasZombieGiftbox = true;
+                            break;
+                    }
+                }
+
+                // Wait for the complete native page. Swapping a partial page
+                // would make a later retry toggle already-repaired cards back.
+                if (!hasEndoflame || !hasPlantGiftbox ||
+                    !hasGravebuster || !hasZombieGiftbox)
+                {
+                    return;
+                }
+
+                int swapped = 0;
+                for (int index = 0; index < cards.Length; index++)
+                {
+                    CardUI card = cards[index];
+                    if (card == null ||
+                        SwapAdventureCardType(card.thePlantType) ==
+                        card.thePlantType)
+                    {
+                        continue;
+                    }
+
+                    int sandboxCost = card.theSeedCost;
+                    float sandboxFullCooldown = card.fullCD;
+                    float sandboxCooldown = card.CD;
+                    ApplyAdventureCardSwap(card);
+
+                    // Sandbox cards are created with their own zero-cost and
+                    // instant-recharge economy. The identity swap must not
+                    // replace those values with normal Adventure PlantData.
+                    card.theSeedCost = sandboxCost;
+                    card.fullCD = sandboxFullCooldown;
+                    card.CD = sandboxCooldown;
+                    card.ChangeCardSprite();
+                    swapped++;
+                }
+
+                configuredSandboxRoleSwapRoot = root;
+                Plugin.Logger.LogInfo(
+                    "[Sandbox] Adventure role order repaired" +
+                    " | Swapped cards = " + swapped
+                );
+            }
+            catch (Exception exception)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Sandbox] Adventure role swap failed safely: " +
+                    exception.Message
+                );
+            }
+        }
+
         internal static void ApplyCardSkin(CardUI card)
         {
             // Every playable Electronion card uses the Night Roof
@@ -134,7 +332,9 @@ namespace PlantsPlus.Core
             if (card == null ||
                 (
                     card.thePlantType != PlantType.ElectricOnion &&
-                    (int)card.thePlantType != Plants.LobShroom.ID
+                    (int)card.thePlantType != Plants.LobShroom.ID &&
+                    (int)card.thePlantType != Plants.BounceShroom.ID &&
+                    (int)card.thePlantType != Plants.BorealOrchid.BorealOrchidID
                 ) ||
                 IsSandboxContext())
             {
@@ -338,10 +538,8 @@ namespace PlantsPlus.Core
                 if (normalCards == null)
                     return false;
 
-                // Frozen Giftbox (SnowPresent) is the 54th and final native
-                // Adventure card. Clone its already configured LibraryCard
-                // grid item so Electronion inherits the sandbox's native
-                // click handling and zero-cost presentation.
+                // Use the native Snowfield packet as a sandbox card template.
+                // The Snowfield row itself moves to page 2 below.
                 Transform? frozenGiftbox =
                     FindDirectCardContainer(
                         normalCards,
@@ -357,6 +555,23 @@ namespace PlantsPlus.Core
                     );
                     return false;
                 }
+
+                Transform firstPage = frozenGiftbox.parent;
+                if (firstPage.GetSiblingIndex() != 0)
+                    return false;
+                Transform? secondPage = normalCards.childCount >= 2
+                    ? normalCards.GetChild(1)
+                    : library.LateCreateCardPage("NormalCards");
+                if (secondPage == null)
+                    return false;
+
+                // LateCreateCardPage may rebuild the native grid. Resolve
+                // both the page and its card again before cloning anything.
+                frozenGiftbox = FindDirectCardContainer(
+                    normalCards, PlantType.SnowPresent);
+                if (frozenGiftbox == null || frozenGiftbox.parent == null)
+                    return false;
+                firstPage = frozenGiftbox.parent;
 
                 // CustomizeLib may already have appended its normal
                 // Electronion pair to another page. Remove every sandbox
@@ -386,6 +601,14 @@ namespace PlantsPlus.Core
                                 !ContainsPlant(
                                     candidate,
                                     (PlantType)Plants.LobShroom.ID
+                                ) &&
+                                !ContainsPlant(
+                                    candidate,
+                                    (PlantType)Plants.BounceShroom.ID
+                                ) &&
+                                !ContainsPlant(
+                                    candidate,
+                                    (PlantType)Plants.BorealOrchid.BorealOrchidID
                                 )
                             ))
                         {
@@ -398,14 +621,20 @@ namespace PlantsPlus.Core
                     }
                 }
 
+                int snowfieldMoved = MoveSnowfieldRow(
+                    firstPage,
+                    secondPage,
+                    frozenGiftbox
+                );
+                if (snowfieldMoved < 0)
+                    return false;
+
                 GameObject lobClone = UnityEngine.Object.Instantiate(
                     frozenGiftbox.gameObject,
-                    frozenGiftbox.parent
+                    firstPage
                 );
                 lobClone.name = "PlantsPlus_LobShroom_SandboxCard";
-                lobClone.transform.SetSiblingIndex(
-                    frozenGiftbox.GetSiblingIndex() + 1
-                );
+                lobClone.transform.SetAsLastSibling();
 
                 CardUI? lobCard =
                     lobClone.GetComponentInChildren<CardUI>(true);
@@ -432,12 +661,10 @@ namespace PlantsPlus.Core
 
                 GameObject clone = UnityEngine.Object.Instantiate(
                     frozenGiftbox.gameObject,
-                    frozenGiftbox.parent
+                    firstPage
                 );
                 clone.name = "PlantsPlus_Electronion_SandboxCard";
-                clone.transform.SetSiblingIndex(
-                    frozenGiftbox.GetSiblingIndex() + 2
-                );
+                clone.transform.SetAsLastSibling();
 
                 CardUI? card =
                     clone.GetComponentInChildren<CardUI>(true);
@@ -465,19 +692,28 @@ namespace PlantsPlus.Core
                 card.ChangeCardSprite();
 
                 RectTransform? pageRect =
-                    frozenGiftbox.parent as RectTransform;
+                    firstPage as RectTransform;
                 if (pageRect != null)
                 {
                     LayoutRebuilder.ForceRebuildLayoutImmediate(pageRect);
                 }
+                if (secondPage is RectTransform snowPageRect)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(snowPageRect);
 
                 configuredSandboxLibrary = library;
                 sandboxLobContainer = lobClone.transform;
                 sandboxElectronionContainer = clone.transform;
 
+                CreateIZSandboxCard(clone, clone.transform.parent,
+                    (PlantType)Plants.BounceShroom.ID,
+                    clone.transform.GetSiblingIndex() + 1, "BounceShroom");
+                CreateIZSandboxCard(clone, clone.transform.parent,
+                    (PlantType)Plants.BorealOrchid.BorealOrchidID,
+                    lobClone.transform.GetSiblingIndex(), "BorealOrchid");
+
                 Plugin.Logger.LogInfo(
-                    "[Sandbox] Lob-shroom then Electronion inserted after " +
-                    "Frozen Giftbox while Boreal Orchid is paused" +
+                    "[Sandbox] Night Roof inserted after Roof" +
+                    " | Snowfield moved to page 2 = " + snowfieldMoved +
                     " | Cost = 0" +
                     " | Previous custom containers removed = " +
                     removedContainers
@@ -567,12 +803,11 @@ namespace PlantsPlus.Core
                             int directCardCount =
                                 CountDirectCardContainers(candidatePage);
 
-                            // The native Adventure grid has 54 cards and
-                            // contains the basic starters. Prefer the closest
-                            // matching grid if a translated build adds one or
-                            // two native entries.
-                            if (directCardCount >= 50 &&
-                                directCardCount <= 56 &&
+                            // Sandbox 4.0 may keep far more than 54 cards
+                            // on one page. Identify the card grid by its
+                            // starter plants, not a 3.9-only page count.
+                            if (directCardCount >= 45 &&
+                                directCardCount <= 200 &&
                                 FindDirectCardContainer(
                                     candidatePage,
                                     PlantType.Peashooter
@@ -614,6 +849,10 @@ namespace PlantsPlus.Core
                     return false;
                 }
 
+                Transform? snowPage = EnsureIZSandboxSecondPage(firstPage);
+                if (snowPage == null)
+                    return false;
+
                 int removedCards = 0;
 
                 Transform pagesRoot =
@@ -651,7 +890,11 @@ namespace PlantsPlus.Core
                                 candidateCard.thePlantType !=
                                     PlantType.ElectricOnion &&
                                 (int)candidateCard.thePlantType !=
-                                    Plants.LobShroom.ID
+                                    Plants.LobShroom.ID &&
+                                (int)candidateCard.thePlantType !=
+                                    Plants.BounceShroom.ID &&
+                                (int)candidateCard.thePlantType !=
+                                    Plants.BorealOrchid.BorealOrchidID
                             ))
                         {
                             continue;
@@ -663,14 +906,31 @@ namespace PlantsPlus.Core
                     }
                 }
 
-                int firstNightRoofIndex =
-                    frozenGiftbox.GetSiblingIndex() + 1;
+                int snowfieldMoved = MoveSnowfieldRow(
+                    firstPage,
+                    snowPage,
+                    frozenGiftbox
+                );
+                if (snowfieldMoved < 0)
+                    return false;
+
+                int firstNightRoofIndex = firstPage.childCount;
+
+                GameObject? borealClone = CreateIZSandboxCard(
+                    frozenGiftbox.gameObject,
+                    firstPage,
+                    (PlantType)Plants.BorealOrchid.BorealOrchidID,
+                    firstNightRoofIndex,
+                    "BorealOrchid"
+                );
+                if (borealClone == null)
+                    return false;
 
                 GameObject? lobClone = CreateIZSandboxCard(
                     frozenGiftbox.gameObject,
                     firstPage,
                     (PlantType)Plants.LobShroom.ID,
-                    firstNightRoofIndex,
+                    firstNightRoofIndex + 1,
                     "LobShroom"
                 );
 
@@ -681,7 +941,7 @@ namespace PlantsPlus.Core
                     frozenGiftbox.gameObject,
                     firstPage,
                     PlantType.ElectricOnion,
-                    firstNightRoofIndex + 1,
+                    firstNightRoofIndex + 2,
                     "Electronion"
                 );
 
@@ -694,17 +954,22 @@ namespace PlantsPlus.Core
                 {
                     LayoutRebuilder.ForceRebuildLayoutImmediate(pageRect);
                 }
+                if (snowPage is RectTransform snowPageRect)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(snowPageRect);
 
                 configuredIZMenu = menu;
                 sandboxLobContainer = lobClone.transform;
                 sandboxElectronionContainer = clone.transform;
+                CreateIZSandboxCard(clone, clone.transform.parent,
+                    (PlantType)Plants.BounceShroom.ID,
+                    clone.transform.GetSiblingIndex() + 1, "BounceShroom");
                 sandboxPageMissingLogged = false;
 
                 Plugin.Logger.LogInfo(
                     "[Sandbox] Lob-shroom then Electronion inserted in " +
                     firstPage.name +
-                    " immediately after SnowPresent while Boreal Orchid " +
-                    "is paused" +
+                    " immediately after Roof" +
+                    " | Snowfield moved to page 2 = " + snowfieldMoved +
                     " | Sibling index = " +
                     clone.transform.GetSiblingIndex() +
                     " | Cards on page = " + firstPage.childCount +
@@ -799,6 +1064,72 @@ namespace PlantsPlus.Core
             return clone;
         }
 
+        private static Transform? EnsureIZSandboxSecondPage(
+            Transform firstPage)
+        {
+            Transform? pagesRoot = firstPage.parent;
+            if (pagesRoot == null)
+                return null;
+
+            int nextIndex = firstPage.GetSiblingIndex() + 1;
+            if (nextIndex < pagesRoot.childCount)
+            {
+                Transform next = pagesRoot.GetChild(nextIndex);
+                if (next != null &&
+                    (next.name.StartsWith("PlantCardPage_",
+                        StringComparison.Ordinal) ||
+                     next.name.Equals("Page2",
+                        StringComparison.Ordinal)))
+                    return next;
+            }
+
+            // This menu has no SeedLibrary factory. Its native Page control
+            // enumerates sibling pages, so clone the existing page shell and
+            // remove the cloned cards while it is inactive.
+            if (pagesRoot.GetComponent<Page>() == null)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Sandbox] Native page controller was not found; " +
+                    "page 2 was not created.");
+                return null;
+            }
+
+            bool wasActive = firstPage.gameObject.activeSelf;
+            firstPage.gameObject.SetActive(false);
+            GameObject newPage;
+            try
+            {
+                newPage = UnityEngine.Object.Instantiate(
+                    firstPage.gameObject, pagesRoot);
+            }
+            finally
+            {
+                firstPage.gameObject.SetActive(wasActive);
+            }
+
+            newPage.SetActive(false);
+            newPage.name = firstPage.name.StartsWith("PlantCardPage_",
+                StringComparison.Ordinal)
+                ? "PlantCardPage_2"
+                : "Page2";
+            newPage.transform.SetSiblingIndex(nextIndex);
+            for (int index = newPage.transform.childCount - 1;
+                 index >= 0; index--)
+            {
+                Transform child = newPage.transform.GetChild(index);
+                if (child != null &&
+                    child.GetComponentInChildren<CardUI>(true) != null)
+                {
+                    child.gameObject.SetActive(false);
+                    UnityEngine.Object.Destroy(child.gameObject);
+                }
+            }
+
+            Plugin.Logger.LogInfo(
+                "[Sandbox] Native page 2 created from the card page shell.");
+            return newPage.transform;
+        }
+
         private static int CountDirectCardContainers(Transform page)
         {
             int count = 0;
@@ -814,6 +1145,61 @@ namespace PlantsPlus.Core
             }
 
             return count;
+        }
+
+        // PvZ Fusion 4.0 keeps Snowfield (the nine cards ending with Frozen
+        // Giftbox) and the following Memory Snow cards on page 1. Move every
+        // native card from the start of Snowfield onward to page 2, leaving
+        // the space after Roof for Night Roof.
+        // Return -1 rather than moving an unrecognised layout.
+        private static int MoveSnowfieldRow(
+            Transform firstPage,
+            Transform secondPage,
+            Transform frozenGiftbox
+        )
+        {
+            if (frozenGiftbox.parent == secondPage)
+                return 0;
+
+            if (frozenGiftbox.parent != firstPage ||
+                CountDirectCardContainers(firstPage) < 54 ||
+                frozenGiftbox.GetSiblingIndex() < 8)
+            {
+                return -1;
+            }
+
+            int start = frozenGiftbox.GetSiblingIndex() - 8;
+            for (int offset = 0; offset < 9; offset++)
+            {
+                Transform candidate = firstPage.GetChild(start + offset);
+                CardUI? card = candidate.GetComponentInChildren<CardUI>(true);
+                if (card == null || (int)card.thePlantType >= 6000)
+                    return -1;
+            }
+
+            int moved = 0;
+            int scan = start;
+            while (scan < firstPage.childCount)
+            {
+                Transform candidate = firstPage.GetChild(scan);
+                if (candidate == null)
+                {
+                    scan++;
+                    continue;
+                }
+                CardUI? card = candidate.GetComponentInChildren<CardUI>(true);
+                if (card == null || (int)card.thePlantType >= 6000)
+                {
+                    scan++;
+                    continue;
+                }
+
+                candidate.SetParent(secondPage, false);
+                candidate.SetAsLastSibling();
+                moved++;
+            }
+
+            return moved;
         }
 
         internal static void TryEnsureSandboxElectronion()
@@ -913,22 +1299,49 @@ namespace PlantsPlus.Core
                 PlantType lobType = (PlantType)Plants.LobShroom.ID;
                 Transform? lobContainer =
                     FindDirectCardContainer(normalCards, lobType);
+                PlantType borealType =
+                    (PlantType)Plants.BorealOrchid.BorealOrchidID;
+                PlantType bounceType =
+                    (PlantType)Plants.BounceShroom.ID;
+                Transform? borealContainer =
+                    FindDirectCardContainer(normalCards, borealType);
+                Transform? bounceContainer =
+                    FindDirectCardContainer(normalCards, bounceType);
 
                 // If both complete pairs are already in their final native
                 // page/order, this event has nothing left to do.
                 if (repairedNormalLibrary == library &&
+                    FindDirectCardContainer(
+                        normalCards, PlantType.SnowPresent
+                    )?.parent != normalCards.GetChild(0) &&
                     electronionContainer != null &&
                     lobContainer != null &&
+                    borealContainer != null &&
+                    bounceContainer != null &&
                     electronionContainer == normalCardContainer &&
                     IsHealthyNormalPair(
                         electronionContainer,
                         normalCards,
-                        PlantType.ElectricOnion
+                        PlantType.ElectricOnion,
+                        0
                     ) &&
                     IsHealthyNormalPair(
                         lobContainer,
                         normalCards,
-                        lobType
+                        lobType,
+                        0
+                    ) &&
+                    IsHealthyNormalPair(
+                        borealContainer,
+                        normalCards,
+                        borealType,
+                        0
+                    ) &&
+                    IsHealthyNormalPair(
+                        bounceContainer,
+                        normalCards,
+                        bounceType,
+                        0
                     ) &&
                     lobContainer.parent == electronionContainer.parent &&
                     lobContainer.GetSiblingIndex() <
@@ -944,7 +1357,8 @@ namespace PlantsPlus.Core
                 // kept retrying from InGameUI.Update when one was absent.
                 // CustomizeLib already gives us deterministic creation events,
                 // so repair whichever card exists at that event and stop.
-                if (electronionContainer == null && lobContainer == null)
+                if (electronionContainer == null && lobContainer == null &&
+                    borealContainer == null && bounceContainer == null)
                 {
                     if (warnedMissingNormalLibrary != library)
                     {
@@ -971,8 +1385,34 @@ namespace PlantsPlus.Core
                     return;
                 }
 
+                Transform? firstPage = normalCards.childCount > 0
+                    ? normalCards.GetChild(0)
+                    : null;
+                Transform? frozenGiftbox = FindDirectCardContainer(
+                    normalCards,
+                    PlantType.SnowPresent
+                );
+                if (firstPage == null || frozenGiftbox == null)
+                    return;
+
+                int snowfieldMoved = MoveSnowfieldRow(
+                    firstPage,
+                    secondPage,
+                    frozenGiftbox
+                );
+                if (snowfieldMoved < 0)
+                {
+                    Plugin.Logger.LogWarning(
+                        "[Night Roof] Native Snowfield row was not recognised; " +
+                        "card pagination left unchanged."
+                    );
+                    return;
+                }
+
                 int removedLobTemplates = 0;
                 int removedElectronionTemplates = 0;
+                int removedBorealTemplates = 0;
+                int removedBounceTemplates = 0;
                 bool lobMoved = false;
                 bool electronionMoved = false;
                 int electronionCards = 0;
@@ -985,8 +1425,8 @@ namespace PlantsPlus.Core
                             lobType,
                             false
                         );
-                    lobMoved = lobContainer.parent != secondPage;
-                    lobContainer.SetParent(secondPage, false);
+                    lobMoved = lobContainer.parent != firstPage;
+                    lobContainer.SetParent(firstPage, false);
                     lobContainer.SetAsLastSibling();
                 }
 
@@ -999,8 +1439,8 @@ namespace PlantsPlus.Core
                             true
                         );
                     electronionMoved =
-                        electronionContainer.parent != secondPage;
-                    electronionContainer.SetParent(secondPage, false);
+                        electronionContainer.parent != firstPage;
+                    electronionContainer.SetParent(firstPage, false);
                     electronionContainer.SetAsLastSibling();
 
                     CardUI[] cards =
@@ -1027,14 +1467,43 @@ namespace PlantsPlus.Core
                     electronionContainer.SetAsLastSibling();
                 }
 
-                RectTransform? secondPageRect =
-                    secondPage as RectTransform;
-                if (secondPageRect != null)
+                RectTransform? firstPageRect =
+                    firstPage as RectTransform;
+                if (bounceContainer != null)
+                {
+                    removedBounceTemplates = NormalizeNormalCardContainer(
+                        bounceContainer,
+                        bounceType,
+                        false
+                    );
+                    bounceContainer.SetParent(firstPage, false);
+                    bounceContainer.SetAsLastSibling();
+                }
+                if (borealContainer != null)
+                {
+                    removedBorealTemplates = NormalizeNormalCardContainer(
+                        borealContainer,
+                        borealType,
+                        false
+                    );
+                    borealContainer.SetParent(firstPage, false);
+                    borealContainer.SetAsLastSibling();
+                }
+                // CustomizeLib may reconstruct these containers in any
+                // order. Finish with the intended Night Roof progression.
+                if (borealContainer != null) borealContainer.SetAsLastSibling();
+                if (lobContainer != null) lobContainer.SetAsLastSibling();
+                if (electronionContainer != null)
+                    electronionContainer.SetAsLastSibling();
+                if (bounceContainer != null) bounceContainer.SetAsLastSibling();
+                if (firstPageRect != null)
                 {
                     LayoutRebuilder.ForceRebuildLayoutImmediate(
-                        secondPageRect
+                        firstPageRect
                     );
                 }
+                if (secondPage is RectTransform snowPageRect)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(snowPageRect);
 
                 int hiddenUniqueCards = electronionContainer != null
                     ? HideElectronionFromUniqueSelection(library)
@@ -1050,8 +1519,13 @@ namespace PlantsPlus.Core
                     removedLobTemplates +
                     " | Electronion templates removed = " +
                     removedElectronionTemplates +
-                    " | Lob moved to page 2 = " + lobMoved +
-                    " | Electronion moved to page 2 = " +
+                    " | Boreal templates removed = " +
+                    removedBorealTemplates +
+                    " | Bounce templates removed = " +
+                    removedBounceTemplates +
+                    " | Snowfield moved to page 2 = " + snowfieldMoved +
+                    " | Lob moved to page 1 = " + lobMoved +
+                    " | Electronion moved to page 1 = " +
                     electronionMoved +
                     " | Hidden Unique Electronion = " +
                     hiddenUniqueCards
@@ -1521,13 +1995,14 @@ namespace PlantsPlus.Core
         private static bool IsHealthyNormalPair(
             Transform? cardContainer,
             Transform normalCards,
-            PlantType expectedType
+            PlantType expectedType,
+            int expectedPageIndex
         )
         {
             if (cardContainer == null ||
                 cardContainer.parent == null ||
                 cardContainer.parent.parent != normalCards ||
-                cardContainer.parent.GetSiblingIndex() != 1)
+                cardContainer.parent.GetSiblingIndex() != expectedPageIndex)
             {
                 return false;
             }
@@ -1764,6 +2239,15 @@ namespace PlantsPlus.Core
             card.parent = parent;
             card.isExtra = isExtra;
 
+            // Do not inherit the unavailable state of the cloned packet.
+            if (SeedLibrary.Instance != null && !IsLimitedChallengeSelection(SeedLibrary.Instance))
+            {
+                card.isAvailable = true;
+                card.disabled = false;
+                if (card.transform.childCount > 3)
+                    card.transform.GetChild(3).gameObject.SetActive(false);
+            }
+
             ApplyCardSkin(card);
         }
 
@@ -1820,6 +2304,10 @@ namespace PlantsPlus.Core
                 return;
 
             AlmanacCardUI? electronion = null;
+            AlmanacCardUI? bounceShroom = null;
+            AlmanacCardUI? borealOrchid = null;
+            AlmanacCardUI? anyBounceShroom = null;
+            AlmanacCardUI? anyBorealOrchid = null;
             AlmanacCardUI? lobShroom = null;
             AlmanacCardUI? frozenGiftbox = null;
             AlmanacCardUI? anyElectronion = null;
@@ -1834,7 +2322,22 @@ namespace PlantsPlus.Core
                 if (card == null)
                     continue;
 
-                if (card.PlantType == PlantType.ElectricOnion)
+                if ((int)card.PlantType == Plants.BounceShroom.ID)
+                {
+                    anyBounceShroom ??= card;
+                    if (menu.basicCardHead != null &&
+                        IsDescendantOf(card.transform, menu.basicCardHead))
+                        bounceShroom = card;
+                }
+                else if ((int)card.PlantType ==
+                    Plants.BorealOrchid.BorealOrchidID)
+                {
+                    anyBorealOrchid ??= card;
+                    if (menu.basicCardHead != null &&
+                        IsDescendantOf(card.transform, menu.basicCardHead))
+                        borealOrchid = card;
+                }
+                else if (card.PlantType == PlantType.ElectricOnion)
                 {
                     electronionCandidates++;
                     anyElectronion ??= card;
@@ -1875,6 +2378,8 @@ namespace PlantsPlus.Core
             }
 
             electronion ??= anyElectronion;
+            bounceShroom ??= anyBounceShroom;
+            borealOrchid ??= anyBorealOrchid;
             lobShroom ??= anyLobShroom;
             frozenGiftbox ??= anyFrozenGiftbox;
 
@@ -1905,14 +2410,30 @@ namespace PlantsPlus.Core
             if (targetParent == null)
                 return;
 
+            if (borealOrchid != null)
+                borealOrchid.transform.SetParent(targetParent, false);
             lobShroom.transform.SetParent(targetParent, false);
             electronion.transform.SetParent(targetParent, false);
+            if (bounceShroom != null)
+                bounceShroom.transform.SetParent(targetParent, false);
             int targetSiblingIndex =
                 frozenGiftbox.transform.parent == targetParent
                     ? frozenGiftbox.transform.GetSiblingIndex() + 1
                     : targetParent.childCount - 1;
-            lobShroom.transform.SetSiblingIndex(targetSiblingIndex);
-            electronion.transform.SetSiblingIndex(targetSiblingIndex + 1);
+            if (borealOrchid != null)
+                borealOrchid.transform.SetSiblingIndex(targetSiblingIndex);
+            lobShroom.transform.SetSiblingIndex(
+                targetSiblingIndex + (borealOrchid != null ? 1 : 0));
+            electronion.transform.SetSiblingIndex(
+                targetSiblingIndex + (borealOrchid != null ? 2 : 1));
+            if (bounceShroom != null)
+            {
+                bounceShroom.transform.SetSiblingIndex(
+                    targetSiblingIndex + (borealOrchid != null ? 3 : 2));
+                NormalizeAlmanacCard(bounceShroom, frozenGiftbox);
+            }
+            if (borealOrchid != null)
+                NormalizeAlmanacCard(borealOrchid, frozenGiftbox);
 
             // The card was originally created under Grid2. Normalize all
             // RectTransform data to a native unlocked card after moving it
@@ -2018,9 +2539,9 @@ namespace PlantsPlus.Core
 
             Plugin.Logger.LogInfo(
                 "[Night Roof] Almanac placement repaired" +
-                " | Order = Frozen Giftbox, Lob-shroom, Electronion" +
+                " | Order = Frozen Giftbox, Boreal Orchid, Lob-shroom, Electronion, Bounce-shroom" +
                 " | Unlock = " +
-                Lawnf.CheckIfPlantUnlock(PlantType.ElectricOnion) +
+                PlantDataManager.CheckIfPlantUnlock(PlantType.ElectricOnion) +
                 " | Active = " +
                 electronion.gameObject.activeSelf +
                 " | In hierarchy = " +
@@ -2039,6 +2560,30 @@ namespace PlantsPlus.Core
                 ) +
                 " | Unique classification removed"
             );
+        }
+
+        private static void NormalizeAlmanacCard(
+            AlmanacCardUI card,
+            AlmanacCardUI template)
+        {
+            RectTransform? rect = card.transform as RectTransform;
+            RectTransform? nativeRect = template.transform as RectTransform;
+            if (rect != null && nativeRect != null)
+            {
+                rect.anchorMin = nativeRect.anchorMin;
+                rect.anchorMax = nativeRect.anchorMax;
+                rect.pivot = nativeRect.pivot;
+                rect.sizeDelta = nativeRect.sizeDelta;
+                rect.localScale = nativeRect.localScale;
+                rect.localRotation = nativeRect.localRotation;
+            }
+            card.gameObject.SetActive(true);
+            if (card.image != null) card.image.enabled = true;
+            if (card.background != null) card.background.enabled = true;
+            if (card.cost != null) card.cost.enabled = true;
+            if (card.shadowMask != null) card.shadowMask.enabled = false;
+            LayoutElement? layout = card.GetComponent<LayoutElement>();
+            if (layout != null) layout.ignoreLayout = false;
         }
 
         private static bool IsDescendantOf(
@@ -2382,6 +2927,14 @@ namespace PlantsPlus.Core
     {
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last)]
+        [HarmonyPatch(typeof(SeedLibrary), "_SetNormalCards_b__15_0")]
+        private static void NormalCardCreatedPostfix(CardUI card)
+        {
+            NightRoofCards.ApplyAdventureCardSwap(card);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
         [HarmonyPatch(typeof(Lawnf), nameof(Lawnf.IsBasicPlant))]
         private static void IsBasicPlantPostfix(
             PlantType thePlantType,
@@ -2389,21 +2942,37 @@ namespace PlantsPlus.Core
         )
         {
             if (thePlantType == PlantType.ElectricOnion ||
-                (int)thePlantType == Plants.LobShroom.ID)
+                (int)thePlantType == Plants.LobShroom.ID ||
+                (int)thePlantType == Plants.BounceShroom.ID ||
+                (int)thePlantType == Plants.BorealOrchid.BorealOrchidID ||
+                thePlantType == PlantType.EndoFlame ||
+                thePlantType == PlantType.Gravebuster)
+            {
                 __result = true;
+            }
+            else if (thePlantType == PlantType.Present ||
+                     thePlantType == PlantType.PresentZombie)
+            {
+                __result = false;
+            }
         }
 
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last)]
-        [HarmonyPatch(typeof(Lawnf), nameof(Lawnf.CheckIfPlantUnlock))]
+        [HarmonyPatch(
+            typeof(PlantDataManager),
+            nameof(PlantDataManager.CheckIfPlantUnlock)
+        )]
         private static void CheckIfPlantUnlockPostfix(
             PlantType thePlantType,
-            ref UnlockType __result
+            ref bool __result
         )
         {
             if (thePlantType == PlantType.ElectricOnion ||
-                (int)thePlantType == Plants.LobShroom.ID)
-                __result = UnlockType.Unlocked;
+                (int)thePlantType == Plants.LobShroom.ID ||
+                (int)thePlantType == Plants.BounceShroom.ID ||
+                (int)thePlantType == Plants.BorealOrchid.BorealOrchidID)
+                __result = true;
         }
 
         [HarmonyPostfix]
@@ -2450,7 +3019,14 @@ namespace PlantsPlus.Core
             string name
         )
         {
-            NightRoofCards.EnsureSandboxElectronion(__instance);
+            bool sandboxReady =
+                NightRoofCards.EnsureSandboxElectronion(__instance);
+            if (sandboxReady)
+            {
+                NightRoofCards.RepairSandboxAdventureRoleSwap(
+                    __instance.gameObject
+                );
+            }
             NightRoofCards.RefreshSelectionCards(__instance);
             NightRoofCards.RepairCardsAfterCustomizeLibCreation();
         }
@@ -2471,6 +3047,9 @@ namespace PlantsPlus.Core
             }
 
             NightRoofCards.EnsureSandboxElectronion(__instance);
+            NightRoofCards.RepairSandboxAdventureRoleSwap(
+                __instance.plantLibrary
+            );
         }
 
         // CustomizeLib creates custom cards from a coroutine 1.5 seconds
@@ -2570,12 +3149,26 @@ namespace PlantsPlus.Core
             AlmanacPlantMenu __instance
         )
         {
-            // InitCards is too early for scroll/layout measurements in the supported game build.
-            // Reparent the card now; resize later from LookUnlocked.
-            NightRoofCards.RepairAlmanac(
-                __instance,
-                resizeScrollableArea: false
-            );
+            // 4.0.5.2 creates the cards before all native Almanac objects are
+            // ready. Repairing this grid here throws across the IL2CPP hook.
+            // Wait for LookUnlocked, when the menu has finished building.
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
+        [HarmonyPatch(
+            typeof(AlmanacPlantMenu),
+            "SetCard",
+            new Type[] { typeof(Transform), typeof(PlantType) }
+        )]
+        private static void AlmanacSetCardPrefix(
+            ref PlantType thePlantType
+        )
+        {
+            if (ClassicFusionSlots.CreatingSlot)
+                return;
+            thePlantType =
+                NightRoofCards.SwapAdventureCardType(thePlantType);
         }
 
         [HarmonyPostfix]
@@ -2588,7 +3181,85 @@ namespace PlantsPlus.Core
             AlmanacPlantMenu __instance
         )
         {
-            NightRoofCards.RepairAlmanac(__instance);
+            try
+            {
+                NightRoofCards.RepairAlmanac(__instance);
+            }
+            catch (Exception exception)
+            {
+                Plugin.Logger.LogWarning(
+                    "[Night Roof] Almanac placement deferred: " +
+                    exception.Message);
+            }
+        }
+
+        [HarmonyPatch(
+            typeof(SeedLibrary.__c__DisplayClass36_0),
+            "_RegisterGroupButton_b__1"
+        )]
+        private static class PreviousLoadoutGiftboxPatch
+        {
+            [HarmonyPostfix]
+            private static void Postfix(
+                SeedLibrary.__c__DisplayClass36_0 __instance
+            )
+            {
+                if (__instance == null || __instance.group == null ||
+                    __instance.group.savedCards == null ||
+                    __instance.__4__this == null ||
+                    InGameUI.Instance == null)
+                {
+                    return;
+                }
+
+                CardUI[] cards = __instance.__4__this
+                    .GetComponentsInChildren<CardUI>(true);
+
+                for (int savedIndex = 0;
+                     savedIndex < __instance.group.savedCards.Count;
+                     savedIndex++)
+                {
+                    SavedCard saved =
+                        __instance.group.savedCards[savedIndex];
+                    if (saved == null ||
+                        (saved.plantType != PlantType.Present &&
+                         saved.plantType != PlantType.PresentZombie))
+                    {
+                        continue;
+                    }
+
+                    CardUI? fallback = null;
+                    for (int cardIndex = 0;
+                         cardIndex < cards.Length;
+                         cardIndex++)
+                    {
+                        CardUI card = cards[cardIndex];
+                        if (card == null ||
+                            card.thePlantType != saved.plantType)
+                        {
+                            continue;
+                        }
+
+                        fallback ??= card;
+                        if (card.isExtra != saved.extra)
+                            continue;
+
+                        fallback = card;
+                        break;
+                    }
+
+                    if (fallback == null ||
+                        InGameUI.Instance.CardSlotManager == null ||
+                        InGameUI.Instance.CardSlotManager.ContainsCard(
+                            fallback
+                        ))
+                    {
+                        continue;
+                    }
+
+                    InGameUI.Instance.AddCardToBank(fallback, true);
+                }
+            }
         }
     }
 }

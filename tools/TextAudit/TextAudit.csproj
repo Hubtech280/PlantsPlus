@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <DefineConstants>ENABLE_MAGNETOPEA</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/PlantsPlus/AlmanacContent.cs" Link="AlmanacEntry.cs" />
+    <Compile Include="../../src/PlantsPlus/AlmanacContentRework.cs" Link="AlmanacContent.cs" />
+    <Compile Include="../../src/PlantsPlus/AlmanacContentChinese.cs" Link="Chinese.cs" />
+    <Compile Include="../../src/PlantsPlus/FrenchAlmanacComplete.cs" Link="French.cs" />
+    <Compile Include="../../src/PlantsPlus/AlmanacVoice.cs" Link="Voice.cs" />
+    <Compile Include="../../src/PlantsPlus/PlantFlavorText.cs" Link="Flavor.cs" />
+  </ItemGroup>
+</Project>

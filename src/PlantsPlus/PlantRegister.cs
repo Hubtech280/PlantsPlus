@@ -25,6 +25,7 @@ namespace PlantsPlus.Core
 
             RegisterLotusPumpkin();
             RegisterBambNut();
+            RegisterBamboom();
             RegisterIcebergShroom();
             RegisterWitchfirePumpkin();
             if (RegisterNuttySharpshooterProjectile())
@@ -59,6 +60,7 @@ namespace PlantsPlus.Core
             {
                 ("Lotus Pumpkin", LotusPumpkin.LotusPumpkinID),
                 ("Bambnut", BambnutID),
+                ("Bamboom", Bamboom.ID),
                 ("Iceberg-shroom", IcebergShroom.IcebergShroomID),
                 ("Witchfire Pumpkin", WitchfirePumpkin.WitchfirePumpkinID),
                 (
@@ -317,6 +319,17 @@ namespace PlantsPlus.Core
             );
 
             CustomCore.TypeMgrExtra.IsNut.Add((PlantType)BambnutID);
+        }
+
+        private static void RegisterBamboom()
+        {
+            RegisterCustomPlant<Bamboo>(Bamboom.ID, "bamboom", "BambooPrefab", "BambooPreview",
+                new List<(int, int)>
+                {
+                    ((int)PlantType.Bamboo, (int)PlantType.CherryBomb),
+                    ((int)PlantType.CherryBomb, (int)PlantType.Bamboo)
+                }, 0f, 0f, 0, 1500, 15f, 200, AlmanacContent.Bamboom);
+            CustomCore.TypeMgrExtra.UncrashablePlants.Add((PlantType)Bamboom.ID);
         }
 
         private static void RegisterIcebergShroom()

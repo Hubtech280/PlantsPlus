@@ -11,25 +11,39 @@ namespace PlantsPlus
         // Keep the original static logging surface used by the plant classes.
         public static new ManualLogSource Logger { get; private set; } = null!;
 
+        public override void Load()
+        {
+            // Preserve CorePlugin's registration/lifecycle, replacing only its
+            // assembly-wide CreateAndPatchAll attribute-instantiation scan.
+            base.Logger = Log;
+            Logger = base.Logger;
+            foreach (System.Type type in Tools.GetAllMonoBehaviourTypes(typeof(Plugin).Assembly))
+                if (!ClassInjector.IsTypeRegisteredInIl2Cpp(type))
+                    ClassInjector.RegisterTypeInIl2Cpp(type);
+            MetadataPatchBootstrap.Apply(typeof(Plugin).Assembly);
+            OnStart();
+            CorePlugin.OnGameInitAction.Add(new System.Action(OnGameInit));
+        }
+
         public override void OnStart()
         {
             Logger = base.Logger;
 
-            Logger.LogInfo("Plants+ 1.2.1 loaded!");
+            Logger.LogInfo("PvZ Fusion+ 1.3.0 loaded!");
             Logger.LogInfo(
-                "Plants+ assembly path: " +
+                "PvZ Fusion+ assembly path: " +
                 typeof(Plugin).Assembly.Location
             );
             Logger.LogInfo(
-                "Plants+ build marker: 1.2.1-pvzf-3.9-hotfix"
+                "PvZ Fusion+ build marker: 1.3.0-release-roof-observed-ingredients"
             );
 
             NightRoofCards.OnStart();
             NightRoofMap.OnStart();
             SuperLevelEditorPlus.OnStart();
-            NightRoofAdventure.OnStart();
             MainMenuBranding.OnStart();
             RegisterIl2CppTypes();
+            NightRoofTestLevel.OnStart();
             ReapingCollisionBootstrap.OnStart();
             ExcavatorObsidianSpikeSkinBootstrap.OnStart();
             bool registered = PlantRegister.RegisterPlants();
@@ -38,7 +52,7 @@ namespace PlantsPlus
             {
 #if ENABLE_MAGNETOPEA
                 Logger.LogInfo(
-                    "Plants+ registration finished " +
+                    "PvZ Fusion+ registration finished " +
                     "(safe IDs; Pumpkin Podbomber, Inferno Torchflower, " +
                     "Nutty Sharpshooter, " +
                     "Witchfire Pumpkin, Iceberg-shroom and Magnet-o-pea " +
@@ -46,7 +60,7 @@ namespace PlantsPlus
                 );
 #else
                 Logger.LogInfo(
-                    "Plants+ registration finished " +
+                    "PvZ Fusion+ registration finished " +
                     "(safe IDs; Pumpkin Podbomber, Inferno Torchflower, " +
                     "Nutty Sharpshooter, " +
                     "Witchfire Pumpkin and Iceberg-shroom enabled; " +
@@ -57,7 +71,7 @@ namespace PlantsPlus
             else
             {
                 Logger.LogError(
-                    "Plants+ registration failed safely; " +
+                    "PvZ Fusion+ registration failed safely; " +
                     "no custom plant was added."
                 );
             }
@@ -82,10 +96,18 @@ namespace PlantsPlus
             SauerkrautPultBootstrap.OnStart();
             CherryCabbageBootstrap.OnStart();
             LobShroomBootstrap.OnStart();
+            BounceShroomBootstrap.OnStart();
+            BumpingShroomBootstrap.OnStart();
+            SparkShroomBootstrap.OnStart();
+            SlimeShroomSkinBootstrap.OnStart();
+            BorealOrchidBootstrap.OnStart();
+            NightRoofNewFusions.OnStart();
+            V13DoublePotsBootstrap.OnStart();
         }
 
         public override void OnGameInit()
         {
+            NightRoofCards.OnGameInit();
             NightRoofMap.OnGameInit();
             // The game rebuilds part of TravelDictionary during startup.
             // Reassert the weak-Odyssey metadata after that native reset.
@@ -114,16 +136,46 @@ namespace PlantsPlus
             SauerkrautPultBootstrap.OnGameInit();
             CherryCabbageBootstrap.OnGameInit();
             LobShroomBootstrap.OnGameInit();
+            BounceShroomBootstrap.OnGameInit();
+            BumpingShroomBootstrap.OnGameInit();
+            SparkShroomBootstrap.OnGameInit();
+            SlimeShroomSkinBootstrap.OnGameInit();
+            BorealOrchidBootstrap.OnGameInit();
+            NightRoofNewFusions.OnGameInit();
+            V13DoublePotsBootstrap.OnGameInit();
             ExcavatorObsidianSpikeSkinBootstrap.OnGameInit();
 
             // CustomizeLib 3.8 currently leaves the separate lore field out
             // when it copies custom entries into the native Almanac data.
             AlmanacCompatibility.RefreshLoadedData();
+            AlmanacCompatibility.RefreshMechanicsData();
             FinalPlantsBootstrap.OnGameInit();
         }
 
         private static void RegisterIl2CppTypes()
         {
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<BorealOrchid>())
+                ClassInjector.RegisterTypeInIl2Cpp<BorealOrchid>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<NightRoofMoon>())
+                ClassInjector.RegisterTypeInIl2Cpp<NightRoofMoon>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<BorealWaveRuntime>())
+                ClassInjector.RegisterTypeInIl2Cpp<BorealWaveRuntime>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<BorealBoostMarker>())
+                ClassInjector.RegisterTypeInIl2Cpp<BorealBoostMarker>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<BounceShroom>())
+                ClassInjector.RegisterTypeInIl2Cpp<BounceShroom>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<BumpingShroom>())
+                ClassInjector.RegisterTypeInIl2Cpp<BumpingShroom>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<BumpingFusionRunner>())
+                ClassInjector.RegisterTypeInIl2Cpp<BumpingFusionRunner>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SparkShroom>())
+                ClassInjector.RegisterTypeInIl2Cpp<SparkShroom>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SuperaquaShroom>())
+                ClassInjector.RegisterTypeInIl2Cpp<SuperaquaShroom>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SuperaquaShooterBoost>())
+                ClassInjector.RegisterTypeInIl2Cpp<SuperaquaShooterBoost>();
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<PulseShroom>())
+                ClassInjector.RegisterTypeInIl2Cpp<PulseShroom>();
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<LotusPumpkin>())
                 ClassInjector.RegisterTypeInIl2Cpp<LotusPumpkin>();
 
@@ -246,8 +298,15 @@ namespace PlantsPlus
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<ReapingCollisionSecondEffect>())
                 ClassInjector.RegisterTypeInIl2Cpp<ReapingCollisionSecondEffect>();
 
-            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<NightRoofOneStrategy>())
-                ClassInjector.RegisterTypeInIl2Cpp<NightRoofOneStrategy>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<SawMyPot>())
+                ClassInjector.RegisterTypeInIl2Cpp<SawMyPot>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<VortexPot>())
+                ClassInjector.RegisterTypeInIl2Cpp<VortexPot>();
+
+            if (!ClassInjector.IsTypeRegisteredInIl2Cpp<DoublePotSwapRunner>())
+                ClassInjector.RegisterTypeInIl2Cpp<DoublePotSwapRunner>();
 
 #if ENABLE_MAGNETOPEA
             if (!ClassInjector.IsTypeRegisteredInIl2Cpp<MagnetOPea>())

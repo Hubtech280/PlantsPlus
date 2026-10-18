@@ -13,43 +13,27 @@ namespace PlantsPlus.Core
     internal static class MainMenuBranding
     {
         private const string LogoObjectName =
-            "PlantsPlus_V12_Logo";
+            "PvZFusionPlus_Logo";
         private const string ChangelogButtonName =
-            "PlantsPlusChangelogButton";
-        private const string LogoResourceName =
-            "PlantsPlus.Resources.Sprites.plants_v1_2_logo.png";
+            "PvZFusionPlusChangelogButton";
 
-        private const string ChangelogText =
-            "<align=center><size=135%><b>Plants+ - Update v1.2.1</b></size></align>\n" +
-            "<align=center><color=#8BEA45>PvZ Fusion 3.9 compatibility hotfix</color></align>\n\n" +
-            "<b>V1.2.1 HOTFIX</b>\n" +
-            "- Updated Plants+ for PvZ Fusion 3.9 and CustomizeLib 3.9.\n" +
-            "- Restored projectile, piercing, saw and lobbed-shot behavior affected by 3.9.\n" +
-            "- Updated zombie health handling for the new 3.9 values.\n" +
-            "- Fixed Ice-Lord Cactus anti-air shots.\n" +
-            "- Updated Odyssey modifier presentation.\n" +
-            "- Added Reaping Collision for Grim Arbiter + Cryolina Reaper.\n" +
-            "- Added the Excavator Obsidian Spike skin integration.\n\n" +
-            "<b>V1.2 CONTENT</b>\n" +
-            "- 32 custom plants total, including the 12 plants introduced in v1.2.\n" +
-            "- Night Roof support in Super Level Editor+.\n" +
-            "- Plants+ v1.2 main-menu logo, Almanac entries, recipes, projectiles and effects.\n\n" +
-            "<color=#FFB74D><b>DELAYED</b> - Boreal Orchid is still not included and will arrive later.</color>\n\n" +
-            "<align=center><color=#64DD17><b>Quality Over Quantity.</b></color></align>";
-
-        private static Sprite? logoSprite;
         private static bool changelogPending;
+        private static BaseMenu? customChangelogMenu;
+        private static float changelogRequestDeadline;
         private static RectTransform? animatedLogo;
-        private static Image? animatedLogoImage;
+        private static Graphic? animatedLogoGraphic;
         private static float logoAnimationStart;
         private static Vector2 logoTargetPosition;
         private static bool logoAnimationRunning;
         private static float nextBrandingRetryAt;
+        private static Texture2D? principalLogoTexture;
+        private static Texture2D? chineseLogoTexture;
+        private static bool logoLoadFailed;
 
         internal static void OnStart()
         {
             Plugin.Logger.LogInfo(
-                "[Main Menu] Plants+ v1.2.1 changelog enabled."
+                "[Main Menu] PvZ Fusion+ changelog enabled."
             );
         }
 
@@ -77,8 +61,9 @@ namespace PlantsPlus.Core
                 return;
             }
 
-            if (TryReplaceChangelog(menu))
-                changelogPending = false;
+            // Awake may still be followed by the translator's own postfix.
+            // Keep the request pending until the open callback has completed.
+            TryReplaceChangelog(menu);
         }
 
         private static void EnsureLogo(BaseMenu menu)
@@ -86,19 +71,16 @@ namespace PlantsPlus.Core
             Transform existing = menu.transform.Find(LogoObjectName);
             if (existing != null)
             {
+                UpdateLogoImage(existing.GetComponent<RawImage>());
                 BeginLogoAnimation(existing as RectTransform);
                 return;
             }
-
-            Sprite? sprite = LoadLogoSprite();
-            if (sprite == null)
-                return;
 
             GameObject logo = new GameObject(LogoObjectName);
             RectTransform rect =
                 logo.AddComponent<RectTransform>();
             logo.AddComponent<CanvasRenderer>();
-            Image image = logo.AddComponent<Image>();
+            RawImage image = logo.AddComponent<RawImage>();
             rect.SetParent(menu.transform, false);
 
             // This is the open patch of sea between Recommended Levels
@@ -111,18 +93,63 @@ namespace PlantsPlus.Core
             // canvas. This local correction places the logo in the sea gap
             // shown by the supplied 1920x1080 reference capture.
             rect.anchoredPosition = new Vector2(-205f, -100f);
-            rect.sizeDelta = new Vector2(165f, 129f);
+            rect.sizeDelta = new Vector2(180f, 142f);
             rect.localScale = Vector3.one;
             rect.localRotation = Quaternion.identity;
 
-            image.sprite = sprite;
-            image.preserveAspect = true;
+            image.color = Color.white;
             image.raycastTarget = false;
+            UpdateLogoImage(image);
 
             // Render above the menu background while keeping the existing
             // interactive grave and buttons untouched.
             rect.SetAsLastSibling();
             BeginLogoAnimation(rect);
+        }
+
+        private static void UpdateLogoImage(RawImage? image)
+        {
+            if (image == null || logoLoadFailed)
+                return;
+            try
+            {
+                bool chinese = LocalizationBridge.Current == PlantsPlusLanguage.Chinese;
+                Texture2D? texture = chinese ? chineseLogoTexture : principalLogoTexture;
+                if (texture == null)
+                {
+                    string resource = "PlantsPlus.Resources.Branding." +
+                        (chinese ? "logo_chinese.png" : "logo.png");
+                    using Stream stream = Assembly.GetExecutingAssembly()
+                        .GetManifestResourceStream(resource) ??
+                        throw new InvalidOperationException("Missing logo: " + resource);
+                    using var bytes = new MemoryStream();
+                    stream.CopyTo(bytes);
+                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (!ImageConversion.LoadImage(texture, bytes.ToArray(), true))
+                    {
+                        UnityEngine.Object.Destroy(texture);
+                        throw new InvalidOperationException("Could not decode logo: " + resource);
+                    }
+                    texture.name = chinese ? "PvZFusionPlus_LogoChinese" : "PvZFusionPlus_LogoPrincipal";
+                    texture.filterMode = FilterMode.Bilinear;
+                    texture.wrapMode = TextureWrapMode.Clamp;
+                    UnityEngine.Object.DontDestroyOnLoad(texture);
+                    if (chinese) chineseLogoTexture = texture;
+                    else principalLogoTexture = texture;
+                }
+                if (image.texture == texture)
+                    return;
+                image.texture = texture;
+                // Preserve the supplied artwork's aspect ratio and transparency.
+                image.rectTransform.sizeDelta = new Vector2(180f,
+                    180f * texture.height / texture.width);
+            }
+            catch (Exception exception)
+            {
+                logoLoadFailed = true;
+                image.enabled = false;
+                Plugin.Logger.LogError("[Main Menu] Logo could not load: " + exception);
+            }
         }
 
         private static void BeginLogoAnimation(
@@ -132,8 +159,8 @@ namespace PlantsPlus.Core
             if (rect == null)
                 return;
 
-            Image image = rect.GetComponent<Image>();
-            if (image == null)
+            Graphic graphic = rect.GetComponent<Graphic>();
+            if (graphic == null)
                 return;
 
             logoTargetPosition = new Vector2(-205f, -100f);
@@ -141,12 +168,12 @@ namespace PlantsPlus.Core
                 logoTargetPosition + new Vector2(0f, -18f);
             rect.localScale = Vector3.one * 0.82f;
 
-            Color color = image.color;
+            Color color = graphic.color;
             color.a = 0f;
-            image.color = color;
+            graphic.color = color;
 
             animatedLogo = rect;
-            animatedLogoImage = image;
+            animatedLogoGraphic = graphic;
             logoAnimationStart = Time.unscaledTime;
             logoAnimationRunning = true;
             rect.gameObject.SetActive(true);
@@ -161,10 +188,10 @@ namespace PlantsPlus.Core
 
             if (menu.transform.Find(LogoObjectName) == null)
                 EnsureLogo(menu);
+            else
+                UpdateLogoImage(menu.transform.Find(LogoObjectName).GetComponent<RawImage>());
 
-            Transform grave = menu.transform.Find("Grave");
-            if (grave != null && grave.Find(ChangelogButtonName) == null)
-                EnsureChangelogButton(menu);
+            EnsureChangelogButton(menu);
         }
 
         internal static void AnimateLogo(MainMenu menu)
@@ -172,7 +199,7 @@ namespace PlantsPlus.Core
             if (!logoAnimationRunning ||
                 menu == null ||
                 animatedLogo == null ||
-                animatedLogoImage == null)
+                animatedLogoGraphic == null)
             {
                 return;
             }
@@ -220,16 +247,16 @@ namespace PlantsPlus.Core
                 eased
             );
 
-            Color color = animatedLogoImage.color;
+            Color color = animatedLogoGraphic.color;
             color.a = eased;
-            animatedLogoImage.color = color;
+            animatedLogoGraphic.color = color;
 
             if (t >= 1f)
             {
                 animatedLogo.anchoredPosition = logoTargetPosition;
                 animatedLogo.localScale = Vector3.one;
                 color.a = 1f;
-                animatedLogoImage.color = color;
+                animatedLogoGraphic.color = color;
                 logoAnimationRunning = false;
             }
         }
@@ -237,9 +264,13 @@ namespace PlantsPlus.Core
         private static void EnsureChangelogButton(BaseMenu menu)
         {
             Transform grave = menu.transform.Find("Grave");
-            if (grave == null ||
-                grave.Find(ChangelogButtonName) != null)
+            if (grave == null)
+                return;
+
+            Transform existing = grave.Find(ChangelogButtonName);
+            if (existing != null)
             {
+                UpdateChangelogLabel(existing);
                 return;
             }
 
@@ -262,11 +293,7 @@ namespace PlantsPlus.Core
             );
             clone.name = ChangelogButtonName;
 
-            foreach (TextMeshProUGUI text in
-                clone.GetComponentsInChildren<TextMeshProUGUI>(true))
-            {
-                text.text = "Plants+ Changelog";
-            }
+            UpdateChangelogLabel(clone);
 
             UIButton button = clone.GetComponent<UIButton>();
             if (button == null)
@@ -282,28 +309,80 @@ namespace PlantsPlus.Core
             button.clickEvent.AddListener(unityAction);
         }
 
+        private static void UpdateChangelogLabel(Transform button)
+        {
+            string label = ChangelogContent.ButtonLabel;
+            foreach (TextMeshProUGUI text in
+                button.GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                if (text.text != label)
+                    text.text = label;
+            }
+        }
+
         private static void OpenPlantsPlusChangelog(
             UIButton originalButton)
         {
             try
             {
                 changelogPending = true;
+                changelogRequestDeadline = Time.unscaledTime + 5f;
                 originalButton.clickEvent.Invoke();
 
                 BaseMenu? notice = FindNoticeMenu();
                 if (notice != null &&
                     TryReplaceChangelog(notice))
                 {
+                    customChangelogMenu = notice;
+                    ResetChangelogScroll(notice);
                     changelogPending = false;
+                    Plugin.Logger.LogInfo("[Main Menu] Custom PvZ Fusion+ changelog displayed.");
                 }
             }
             catch (Exception exception)
             {
                 changelogPending = false;
                 Plugin.Logger.LogError(
-                    "[Main Menu] Plants+ changelog could not open: " +
+                    "[Main Menu] PvZ Fusion+ changelog could not open: " +
                     exception
                 );
+            }
+        }
+
+        internal static void RefreshCustomChangelog()
+        {
+            if (customChangelogMenu != null)
+            {
+                if (!customChangelogMenu.gameObject.activeInHierarchy)
+                    customChangelogMenu = null;
+                else
+                    TryReplaceChangelog(customChangelogMenu);
+            }
+            if (!changelogPending)
+                return;
+
+            BaseMenu? notice = FindNoticeMenu();
+            if (notice != null && TryReplaceChangelog(notice))
+            {
+                customChangelogMenu = notice;
+                ResetChangelogScroll(notice);
+                changelogPending = false;
+                Plugin.Logger.LogInfo("[Main Menu] Custom PvZ Fusion+ changelog displayed (deferred).");
+            }
+            else if (Time.unscaledTime >= changelogRequestDeadline)
+            {
+                changelogPending = false;
+                Plugin.Logger.LogWarning("[Main Menu] Custom changelog panel/text was not found.");
+            }
+        }
+
+        private static void ResetChangelogScroll(BaseMenu menu)
+        {
+            ScrollRect scroll = menu.GetComponentInChildren<ScrollRect>(true);
+            if (scroll != null)
+            {
+                scroll.StopMovement();
+                scroll.verticalNormalizedPosition = 1f;
             }
         }
 
@@ -315,7 +394,7 @@ namespace PlantsPlus.Core
             foreach (BaseMenu menu in
                 GameAPP.canvasUp.GetComponentsInChildren<BaseMenu>(true))
             {
-                if (menu != null &&
+                if (menu != null && menu.gameObject.activeInHierarchy &&
                     menu.gameObject.name.Contains("NoticePauseMenu"))
                 {
                     return menu;
@@ -334,80 +413,33 @@ namespace PlantsPlus.Core
                 return false;
 
             TextMeshProUGUI text =
-                content.GetComponent<TextMeshProUGUI>();
+                content.GetComponentInChildren<TextMeshProUGUI>(true);
             if (text == null)
                 return false;
 
-            text.text = ChangelogText;
+            string replacement = ChangelogContent.Text;
+            if (text.text == replacement)
+                return true;
+            text.text = replacement;
             text.margin = new Vector4(6f, 2f, 12f, 0f);
             text.enableWordWrapping = true;
             text.overflowMode = TextOverflowModes.Overflow;
             Canvas.ForceUpdateCanvases();
             text.ForceMeshUpdate(false, false);
+            RectTransform contentRect = content.GetComponent<RectTransform>();
+            RectTransform textRect = text.GetComponent<RectTransform>();
+            if (textRect != null)
+                textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                    text.preferredHeight + 16f);
+            if (contentRect != null)
+            {
+                contentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                    text.preferredHeight + 16f);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+            }
             return true;
         }
 
-        private static Sprite? LoadLogoSprite()
-        {
-            if (logoSprite != null)
-                return logoSprite;
-
-            Assembly assembly =
-                Assembly.GetExecutingAssembly();
-            using Stream? stream =
-                assembly.GetManifestResourceStream(
-                    LogoResourceName
-                );
-            if (stream == null)
-            {
-                Plugin.Logger.LogError(
-                    "[Main Menu] Embedded Plants+ v1.2 logo was not found."
-                );
-                return null;
-            }
-
-            byte[] bytes = new byte[stream.Length];
-            int offset = 0;
-            while (offset < bytes.Length)
-            {
-                int read = stream.Read(
-                    bytes,
-                    offset,
-                    bytes.Length - offset
-                );
-                if (read <= 0)
-                    break;
-                offset += read;
-            }
-
-            Texture2D texture = new Texture2D(
-                2,
-                2,
-                TextureFormat.RGBA32,
-                false
-            );
-            if (!ImageConversion.LoadImage(texture, bytes, false))
-            {
-                UnityEngine.Object.Destroy(texture);
-                return null;
-            }
-
-            texture.name = "PlantsPlus_V12_Logo_Texture";
-            texture.filterMode = FilterMode.Bilinear;
-            logoSprite = Sprite.Create(
-                texture,
-                new Rect(
-                    0f,
-                    0f,
-                    texture.width,
-                    texture.height
-                ),
-                new Vector2(0.5f, 0.5f),
-                100f
-            );
-            logoSprite.name = "PlantsPlus_V12_Logo_Sprite";
-            return logoSprite;
-        }
     }
 
     [HarmonyPatch(typeof(BaseMenu), "Awake")]
@@ -437,6 +469,7 @@ namespace PlantsPlus.Core
         {
             MainMenuBranding.EnsureBrandingOnUpdate(__instance);
             MainMenuBranding.AnimateLogo(__instance);
+            MainMenuBranding.RefreshCustomChangelog();
         }
     }
 

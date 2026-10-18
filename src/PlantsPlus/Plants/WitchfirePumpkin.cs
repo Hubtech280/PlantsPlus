@@ -2901,7 +2901,7 @@ namespace PlantsPlus.Plants
 
         [HarmonyPatch(
             typeof(AlmanacPlantMenu.__c),
-            "_LookUlti_b__20_0"
+            "_LookUlti_b__24_0"
         )]
         private static class AlmanacPlantMenu_LookUlti_Filter_Patch
         {
@@ -2915,7 +2915,7 @@ namespace PlantsPlus.Plants
         }
 
         [HarmonyPatch(
-            typeof(AlmanacPlantMenu.__c__DisplayClass21_0),
+            typeof(AlmanacPlantMenu.__c__DisplayClass25_0),
             "_LookTravelUlti_b__0"
         )]
         private static class AlmanacPlantMenu_LookTravelUlti_Filter_Patch
@@ -2923,7 +2923,7 @@ namespace PlantsPlus.Plants
             [HarmonyPostfix]
             [HarmonyPriority(Priority.Last)]
             private static void Postfix(
-                AlmanacPlantMenu.__c__DisplayClass21_0 __instance,
+                AlmanacPlantMenu.__c__DisplayClass25_0 __instance,
                 PlantType p,
                 ref bool __result
             )

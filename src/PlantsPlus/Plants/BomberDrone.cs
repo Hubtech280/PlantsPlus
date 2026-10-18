@@ -69,6 +69,14 @@ namespace PlantsPlus.Core
                     );
                 }
 
+                V11PlantsBootstrap.IsolateAnimationClips(
+                    bundle,
+                    prefab,
+                    "Bomber Drone",
+                    "idle",
+                    "shoot"
+                );
+
                 CustomCore.RegisterCustomPlant<PeaBlover, Plants.BomberDrone>(
                     Plants.BomberDrone.BomberDroneID,
                     prefab,
@@ -171,6 +179,11 @@ namespace PlantsPlus.Core
                 shooter,
                 "Bomber Drone"
             );
+            V11PlantsBootstrap.ApplyNativeShooterControllerWithLocalClips(
+                prefab,
+                "Bomber Drone",
+                PlantType.PeaBlover
+            );
 
             Plugin.Logger.LogInfo(
                 "[Bomber Drone] Registered prefab runtime bridge = " + bridge
@@ -249,10 +262,36 @@ namespace PlantsPlus.Core
         private static class PeaBlover_Shoot1_Patch
         {
             [HarmonyPrefix]
-            private static void Prefix(PeaBlover __instance)
+            private static bool Prefix(PeaBlover __instance)
             {
-                if (IsLiveBomberDrone(__instance))
-                    activeBomberDroneShot = __instance.Pointer;
+                if (!IsLiveBomberDrone(__instance))
+                    return true;
+
+                var zombies = Lawnf.GetAllZombies(false);
+                bool hasLivingEnemy = false;
+
+                if (zombies != null)
+                {
+                    for (int index = 0; index < zombies.Count; index++)
+                    {
+                        Zombie? zombie = zombies[index];
+                        if (zombie != null && zombie.Alive &&
+                            !zombie.isMindControlled)
+                        {
+                            hasLivingEnemy = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasLivingEnemy)
+                {
+                    activeBomberDroneShot = IntPtr.Zero;
+                    return false;
+                }
+
+                activeBomberDroneShot = __instance.Pointer;
+                return true;
             }
 
             [HarmonyPostfix]
@@ -358,6 +397,11 @@ namespace PlantsPlus.Plants
             string bridge = V11PlantsBootstrap.EnsureShooterRuntimeReferences(
                 shooter,
                 "Bomber Drone"
+            );
+            V11PlantsBootstrap.ApplyNativeShooterControllerWithLocalClips(
+                gameObject,
+                "Bomber Drone",
+                PlantType.PeaBlover
             );
 
             Plugin.Logger.LogInfo(

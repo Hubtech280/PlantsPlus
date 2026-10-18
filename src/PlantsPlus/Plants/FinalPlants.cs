@@ -66,36 +66,20 @@ namespace PlantsPlus.Core
                 4000,
                 30f,
                 350,
-                "Ceasarweed",
+                "凯撒草",
                 Brown(
-                    "Ceasarweed turns every missed lobbed shot into a larger " +
-                    "salad barrage on its next attack."
+                    "凯撒草把没有命中的投掷物化作下一轮更密集的沙拉弹幕。"
                 ) + "\n\n" +
-                Stat("Toughness", "4000") + "\n" +
-                Stat("Damage", "80 per salad / 3s") + "\n" +
-                Brown("Special:") + "\n" +
-                Bullet("Launches 1 + X salads, up to 10 per volley.") + "\n" +
-                Bullet(
-                    "X becomes the number of its salads that missed during " +
-                    "the previous volley."
-                ) + "\n" +
-                Bullet(
-                    "Any other lobbed projectile that reaches the ground " +
-                    "without hitting a zombie also adds 1 to X. Released " +
-                    "salads never count twice."
-                ) + "\n" +
-                Bullet("Every salad butters the zombie it hits for 4 seconds.") + "\n" +
-                Bullet(
-                    "Normal zombies and Zombonis ignore it; Gargantuars can " +
-                    "still attack it."
-                ),
+                Stat("耐久", "4000") + "\n" +
+                Stat("伤害", "每份沙拉80 / 3秒") + "\n" +
+                Brown("特性：") + "\n" +
+                Bullet("每轮投出1＋X份沙拉，最多10份。") + "\n" +
+                Bullet("X等于上一轮落空的沙拉数量；其他未击中僵尸的投掷物也会使X增加1。") + "\n" +
+                Bullet("每份命中的沙拉都会使僵尸被黄油定身4秒。") + "\n" +
+                Bullet("普通僵尸和雪橇车僵尸会忽略它；巨人僵尸仍可攻击它。"),
                 LoreWithConversionRecipe(
-                    "\"Nobody likes me...\" complains Ceasarweed. They " +
-                    "used to be a rising star in the salad industry; now, " +
-                    "after five days in the fridge, all they get are " +
-                    "disgusted looks. Ceasarweed insists the smell is part " +
-                    "of the strategy.",
-                    "Spikeweed <-> Melon-pult"
+                    "凯撒草说冰箱里的第五天只是让沙拉更有战术气味。",
+                    "地刺 ↔ 西瓜投手"
                 )
             );
         }
@@ -116,33 +100,21 @@ namespace PlantsPlus.Core
                 4000,
                 30f,
                 200,
-                "Solar Firnace",
+                "太阳熔炉",
                 Brown(
-                    "Solar Firnace burns on borrowed time, producing Sun " +
-                    "while allowing the player to purchase extensions."
+                    "太阳熔炉在有限的生命里生产阳光，还能花费阳光延长时间。"
                 ) + "\n\n" +
-                Stat("Toughness", "4000") + "\n" +
-                Stat("Lifetime", "90 seconds") + "\n" +
-                Stat("Sun Output", "25 / 25s") + "\n" +
-                Brown("Special:") + "\n" +
-                Bullet(
-                    "Click it to spend 100 Sun and add 45 seconds to its " +
-                    "remaining lifetime."
-                ) + "\n" +
-                Bullet(
-                    "Every later extension costs 50 more Sun than the " +
-                    "previous one."
-                ) + "\n" +
-                Bullet(
-                    "Protects the plant beneath it from being frozen by snow."
-                ) + "\n" +
-                Bullet("When the timer reaches zero, it returns to Firnace."),
+                Stat("耐久", "4000") + "\n" +
+                Stat("寿命", "90秒") + "\n" +
+                Stat("阳光产量", "每25秒25阳光") + "\n" +
+                Brown("特性：") + "\n" +
+                Bullet("点击花费100阳光，为剩余寿命增加45秒。") + "\n" +
+                Bullet("此后每次续时比上一次多花费50阳光。") + "\n" +
+                Bullet("保护下方植物，使其不会被雪冻结。") + "\n" +
+                Bullet("计时结束后恢复成原本的熔炉。"),
                 LoreWithRecipe(
-                    "Solar Firnace calls every extension a sound investment. " +
-                    "Sunflower calls it a subscription. Neither of them has " +
-                    "explained why the price keeps increasing, but the lawn " +
-                    "keeps paying anyway.",
-                    "Sunflower + Firnace"
+                    "太阳熔炉说每次续时都是明智投资；向日葵说这更像订阅服务。",
+                    "向日葵 + 熔炉"
                 )
             );
         }
@@ -174,7 +146,7 @@ namespace PlantsPlus.Core
         private static string LoreWithRecipe(string lore, string recipe)
         {
             return Brown(lore) + "\n\n" +
-                Brown("Fusion Recipe: ") + Red(recipe);
+                Brown("合成配方：") + Red(recipe);
         }
 
         private static string LoreWithConversionRecipe(
@@ -183,7 +155,7 @@ namespace PlantsPlus.Core
         )
         {
             return Brown(lore) + "\n\n" +
-                Brown("Conversion Recipe: ") + Red(recipe);
+                Brown("转换配方：") + Red(recipe);
         }
 
         private static void RegisterPlant<TBase, TBehaviour>(
@@ -244,11 +216,14 @@ namespace PlantsPlus.Core
                     cost
                 );
 
+                AlmanacEntry localized = AlmanacContent.ForCurrentLanguage(
+                    id == PlantsPlus.Plants.Ceasarweed.CeasarweedID
+                        ? AlmanacContent.Ceasarweed : AlmanacContent.SolarFirnace);
                 CustomCore.AddPlantAlmanacStrings(
                     (PlantType)id,
-                    name,
-                    info,
-                    introduce,
+                    localized.Name,
+                    localized.Info,
+                    localized.Introduce,
                     cost
                 );
 
@@ -337,16 +312,17 @@ namespace PlantsPlus.Core
                     if (target == null)
                         continue;
 
-                    string cleanName = Regex.Replace(
-                        source.name ?? string.Empty,
-                        "\\([^()]*\\)",
-                        string.Empty
-                    ).TrimEnd();
+                    AlmanacEntry localized = AlmanacContent.ForCurrentLanguage(
+                        index == 0 ? AlmanacContent.Ceasarweed : AlmanacContent.SolarFirnace);
+                    string cleanName = localized.Name;
 
                     target.name = cleanName + " ";
-                    target.info = source.info ?? string.Empty;
-                    target.introduce = source.introduce ?? string.Empty;
-                    target.cost = string.Empty;
+                    source.name = cleanName;
+                    source.info = localized.Info;
+                    source.introduce = localized.Introduce;
+                    target.info = localized.Info;
+                    target.introduce = localized.Introduce;
+                    target.cost = localized.Cost;
                     target.seedType = (int)type;
                 }
             }
@@ -1011,7 +987,7 @@ namespace PlantsPlus.Plants
 
         [HarmonyPatch(
             typeof(AlmanacPlantMenu.__c),
-            "_LookSuper_b__19_0"
+            "_LookSuper_b__23_0"
         )]
         private static class AlmanacPlantMenu_LookSuper_Filter_Patch
         {

@@ -1,4 +1,6 @@
-# Plants+ v1.2.1 - PvZ Fusion 3.9 Hotfix
+# Archived release template — Plants+ v1.2.1
+
+For the current 1.3.0 release, use [GITHUB_RELEASE_NOTES.md](../GITHUB_RELEASE_NOTES.md), not this historical template.
 
 Plants+ v1.2.1 ports the v1.2 release to **PvZ Fusion 3.9**. The custom plant roster remains at 32; this release focuses on compatibility with the new game version and a few 3.9 integrations.
 
